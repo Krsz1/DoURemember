@@ -1,26 +1,44 @@
 import cron from "node-cron";
-import { sendNotification } from "./notificationService.js";
 import { db } from "../utils/firebaseConfig.js";
+import { sendNotification } from "./notificationService.js";
 
-// Ejecuta notificaciones automáticamente según configuración
+const diasSemana = {
+  "Domingo": 0,
+  "Lunes": 1,
+  "Martes": 2,
+  "Miércoles": 3,
+  "Jueves": 4,
+  "Viernes": 5,
+  "Sábado": 6,
+};
+
 export const startScheduler = async () => {
-  console.log("🕒 Planificador de notificaciones activo...");
+  console.log("⏰ Cargando horarios desde Firestore...");
 
-  // Ejecutar cada minuto (solo ejemplo)
-  cron.schedule("* * * * *", async () => {
-    const now = new Date();
-    const horaActual = now.toTimeString().slice(0, 5); // "HH:MM"
-    const diaActual = now.toLocaleString("es-ES", { weekday: "long" });
+  // ♻️ Limpia tareas previas
+  cron.getTasks().forEach(task => task.stop());
+  console.log("♻️ Reiniciando tareas programadas...");
 
-    const schedulesSnap = await db.collection("horarios").get();
-    schedulesSnap.forEach(async (doc) => {
-      const data = doc.data();
-      if (data.dias.includes(diaActual) && data.horarios.includes(horaActual)) {
-        await sendNotification(
-          data.uidPaciente,
-          "¡Hora de ejercitar tu memoria con tus fotos favoritas!"
-        );
-      }
+  const snapshot = await db.collection("horarios").get();
+
+  snapshot.forEach((doc) => {
+    const data = doc.data();
+    const { uidPaciente, dias, horarios } = data;
+
+    dias.forEach((dia) => {
+      horarios.forEach((hora) => {
+        const [hh, mm] = hora.split(":");
+        const diaCron = diasSemana[dia];
+
+        if (diaCron !== undefined) {
+          cron.schedule(`${mm} ${hh} * * ${diaCron}`, async () => {
+            const mensaje = `🧠 Recordatorio programado (${dia} ${hora})`;
+            console.log(`📩 Enviando notificación a ${uidPaciente}: ${mensaje}`);
+            await sendNotification(uidPaciente, mensaje);
+          });
+          console.log(`✅ Recordatorio programado para ${dia} a las ${hora}`);
+        }
+      });
     });
   });
 };
