@@ -68,6 +68,17 @@ const Login = () => {
             Regístrate
           </Link>
         </p>
+
+        {/* Enlace de recuperar clave */}
+        <p className="text-center text-gray-600 mt-8 text-sm">
+          ¿No recuerdas tu clave?{" "}
+          <Link
+            to="/"
+            className="text-orange-500 font-medium hover:underline hover:text-orange-600 transition"
+          >
+            Recupera tu clave
+          </Link>
+        </p>
       </div>
     </div>
   );

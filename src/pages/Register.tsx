@@ -1,3 +1,4 @@
+// src/pages/Register.tsx
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Mail, Lock, User, Phone, IdCard } from "lucide-react";
@@ -5,18 +6,27 @@ import { Mail, Lock, User, Phone, IdCard } from "lucide-react";
 const Register = () => {
   const [formData, setFormData] = useState({
     rol: "",
+    // datos cuando el usuario es MEDICO
     nombre: "",
     documento: "",
+    // datos cuando el usuario es CUIDADOR (o paciente asociado)
+    nombrePaciente: "",
+    documentoPaciente: "",
+    // cuidador propios
+    nombreCuidador: "",
+    documentoCuidador: "",
+    // opcional
+    medicoTratante: "",
+    // contacto / auth
     correo: "",
     telefono: "",
     password: "",
     confirmPassword: "",
-    medicoTratante: "",
-    nombreCuidador: "",
-    documentoCuidador: "",
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -24,19 +34,92 @@ const Register = () => {
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validaciones básicas
+    if (!formData.rol) {
+      alert("Selecciona un rol.");
+      return;
+    }
+
+    if (!formData.correo) {
+      alert("Ingrese un correo electrónico.");
+      return;
+    }
+
+    if (!formData.password || !formData.confirmPassword) {
+      alert("Ingrese y confirme la contraseña.");
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       alert("Las contraseñas no coinciden.");
       return;
     }
 
-    const dataToSend = {
-      ...formData,
-      medicoTratante: formData.rol === "medico" ? null : formData.medicoTratante || null,
-      nombreCuidador: formData.rol === "cuidador" ? formData.nombreCuidador : null,
-      documentoCuidador: formData.rol === "cuidador" ? formData.documentoCuidador : null,
+    // Validaciones por rol
+    if (formData.rol === "medico") {
+      if (!formData.nombre || !formData.documento) {
+        alert("Completa nombre y documento para el médico.");
+        return;
+      }
+    }
+
+    if (formData.rol === "cuidador") {
+      if (!formData.nombrePaciente || !formData.documentoPaciente) {
+        alert("Completa nombre y documento del paciente asociado.");
+        return;
+      }
+      if (!formData.nombreCuidador || !formData.documentoCuidador) {
+        alert("Completa nombre y documento del cuidador.");
+        return;
+      }
+    }
+
+    // Preparar payload consistente
+    const base = {
+      rol: formData.rol,
+      correo: formData.correo,
+      telefono: formData.telefono || null,
     };
 
-    console.log("Datos de registro:", dataToSend);
+    let dataToSend: any = { ...base };
+
+    if (formData.rol === "medico") {
+      dataToSend = {
+        ...dataToSend,
+        tipo: "medico",
+        nombre: formData.nombre,
+        documento: formData.documento,
+        medicoTratante: null,
+        nombreCuidador: null,
+        documentoCuidador: null,
+      };
+    } else if (formData.rol === "cuidador") {
+      dataToSend = {
+        ...dataToSend,
+        tipo: "cuidador",
+        nombrePaciente: formData.nombrePaciente,
+        documentoPaciente: formData.documentoPaciente,
+        nombreCuidador: formData.nombreCuidador || null,
+        documentoCuidador: formData.documentoCuidador || null,
+        medicoTratante: formData.medicoTratante || null,
+      };
+    } else {
+      // por si hay más roles en el futuro
+      dataToSend = {
+        ...dataToSend,
+        tipo: formData.rol,
+        medicoTratante: formData.medicoTratante || null,
+        nombreCuidador: formData.nombreCuidador || null,
+        documentoCuidador: formData.documentoCuidador || null,
+      };
+    }
+
+    // Nota: aquí podrías llamar a tu servicio de auth / API / Firebase para crear el usuario.
+    // Por ahora dejamos en consola para pruebas locales.
+    console.log("Datos de registro preparados:", dataToSend);
+
+    // Ejemplo: limpiar form (opcional)
+    // setFormData({ rol: "", nombre: "", documento: "", nombrePaciente: "", documentoPaciente: "", nombreCuidador: "", documentoCuidador: "", medicoTratante: "", correo: "", telefono: "", password: "", confirmPassword: "" });
   };
 
   return (
@@ -64,12 +147,12 @@ const Register = () => {
               className="w-full pl-4 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-700 focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none transition-all duration-300"
             >
               <option value="">Selecciona tu rol</option>
-              <option value="medico">Médico tratante</option>
-              <option value="cuidador">Cuidador</option>
+              <option value="medico">Médico</option>
+              <option value="cuidador">Cuidador (o responsable del paciente)</option>
             </select>
           </div>
 
-          {/* Campos dinámicos */}
+          {/* Campos dinámicos para MEDICO */}
           {formData.rol === "medico" && (
             <>
               {/* Nombre */}
@@ -102,8 +185,51 @@ const Register = () => {
             </>
           )}
 
+          {/* Campos dinámicos para CUIDADOR */}
           {formData.rol === "cuidador" && (
             <>
+              {/* Nombre del paciente */}
+              <div className="relative">
+                <User className="absolute left-4 top-3.5 text-gray-400" size={18} />
+                <input
+                  type="text"
+                  name="nombrePaciente"
+                  placeholder="Nombre del paciente"
+                  value={formData.nombrePaciente}
+                  onChange={handleChange}
+                  required
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none text-gray-700 transition-all duration-300"
+                />
+              </div>
+
+              {/* Documento del paciente */}
+              <div className="relative">
+                <IdCard className="absolute left-4 top-3.5 text-gray-400" size={18} />
+                <input
+                  type="text"
+                  name="documentoPaciente"
+                  placeholder="Documento del paciente"
+                  value={formData.documentoPaciente}
+                  onChange={handleChange}
+                  required
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none text-gray-700 transition-all duration-300"
+                />
+              </div>
+
+              {/* Médico tratante (opcional) */}
+              <div className="relative">
+                <User className="absolute left-4 top-3.5 text-gray-400" size={18} />
+                <input
+                  type="text"
+                  name="medicoTratante"
+                  placeholder="Nombre del médico tratante (opcional)"
+                  value={formData.medicoTratante}
+                  onChange={handleChange}
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none text-gray-700 transition-all duration-300"
+                />
+              </div>
+
+              {/* Nombre del cuidador */}
               <div className="relative">
                 <User className="absolute left-4 top-3.5 text-gray-400" size={18} />
                 <input
@@ -117,6 +243,7 @@ const Register = () => {
                 />
               </div>
 
+              {/* Documento del cuidador */}
               <div className="relative">
                 <IdCard className="absolute left-4 top-3.5 text-gray-400" size={18} />
                 <input
@@ -126,18 +253,6 @@ const Register = () => {
                   value={formData.documentoCuidador}
                   onChange={handleChange}
                   required
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none text-gray-700 transition-all duration-300"
-                />
-              </div>
-
-              <div className="relative">
-                <User className="absolute left-4 top-3.5 text-gray-400" size={18} />
-                <input
-                  type="text"
-                  name="medicoTratante"
-                  placeholder="Nombre del médico tratante (opcional)"
-                  value={formData.medicoTratante}
-                  onChange={handleChange}
                   className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none text-gray-700 transition-all duration-300"
                 />
               </div>
