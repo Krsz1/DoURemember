@@ -1,85 +1,171 @@
-// controllers/mediaController.js
-const { db, bucket, admin } = require('../utils/firebaseAdmin');
-const { v4: uuidv4 } = require('uuid');
+import path from "path";
+import fs from "fs";
+import { db, bucket } from "../utils/firebaseConfig.js";
+import { uploadBufferToCloudinary, cloudinaryConfigured } from "../utils/cloudinaryConfig.js";
+import { v4 as uuidv4 } from "uuid";
 
-exports.uploadPhoto = async (req, res) => {
+// upload file buffer to Firebase Storage and make it public
+async function uploadBufferToBucket(buffer, originalName, mimetype) {
+  const ext = path.extname(originalName) || "";
+  const filename = `media/${uuidv4()}${ext}`;
+  const file = bucket.file(filename);
+  await file.save(buffer, {
+    metadata: {
+      contentType: mimetype,
+    },
+  });
+  // Make public and return public URL
   try {
-    const { patientId } = req.params;
-    const file = req.file;
-    const { description } = req.body;
+    await file.makePublic();
+  } catch (e) {
+    // ignore if not permitted; URL may still be accessible via signed URLs
+    console.warn("Could not make file public:", e.message);
+  }
+  const publicUrl = `https://storage.googleapis.com/${bucket.name}/${filename}`;
+  return { filename, publicUrl };
+}
 
-    if (!file) return res.status(400).json({ error: 'No file uploaded' });
+// Fallback: if Storage upload fails (e.g. bucket missing), write file to local uploads/ and return local url
+async function uploadBufferWithFallback(buffer, originalName, mimetype) {
+  // Try Cloudinary first (if configured), then Firebase Storage, then local disk
+  if (cloudinaryConfigured) {
+    try {
+      const res = await uploadBufferToCloudinary(buffer, originalName, mimetype);
+      return { filename: `cloudinary/${res.providerId}`, publicUrl: res.publicUrl, provider: 'cloudinary' };
+    } catch (err) {
+      console.warn('Cloudinary upload failed, trying next provider:', err.message || err);
+    }
+  }
 
-    const allowedTypes = ['image/jpeg', 'image/png'];
-    if (!allowedTypes.includes(file.mimetype))
-      return res.status(400).json({ error: 'Invalid file type' });
+  try {
+    const gcsRes = await uploadBufferToBucket(buffer, originalName, mimetype);
+    return { filename: gcsRes.filename, publicUrl: gcsRes.publicUrl, provider: 'gcs' };
+  } catch (err) {
+    console.warn('Storage upload failed, falling back to local disk:', err.message || err);
+    // ensure uploads dir exists
+    const uploadsDir = path.join(process.cwd(), 'uploads');
+    if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+    const ext = path.extname(originalName) || '';
+    const basename = `${uuidv4()}${ext}`;
+    const localPath = path.join(uploadsDir, basename);
+    fs.writeFileSync(localPath, buffer);
+    const publicUrl = `/uploads/${basename}`;
+    return { filename: `local/${basename}`, publicUrl, provider: 'local' };
+  }
+}
 
-    const photoId = uuidv4();
-    const filePath = `photos/${patientId}/${photoId}`;
-    const blob = bucket.file(filePath);
+export const uploadPhoto = async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
-    const blobStream = blob.createWriteStream({
-      metadata: {
-        contentType: file.mimetype,
-        metadata: { firebaseStorageDownloadTokens: uuidv4() }
-      }
-    });
+    // metadata from body
+    const { description, patientId, tags } = req.body;
 
-    blobStream.end(file.buffer);
+    const parsedTags = tags ? (Array.isArray(tags) ? tags : JSON.parse(tags)) : [];
 
-    await db.collection('patients')
-      .doc(patientId)
-      .collection('photos')
-      .doc(photoId)
-      .set({
-        photoId,
-        filePath,
-        uploadedAt: admin.firestore.FieldValue.serverTimestamp(),
-        uploadedBy: req.user.uid,
-        description: description || '',
-        tags: [],
-      });
+  // upload to storage (with fallback to local disk)
+  const { filename, publicUrl, provider } = await uploadBufferWithFallback(req.file.buffer, req.file.originalname, req.file.mimetype);
 
-    return res.status(201).json({ message: 'Photo uploaded', photoId });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Upload failed' });
+    const metadata = {
+      id: uuidv4(),
+      storagePath: filename,
+      storageProvider: provider || null,
+      originalname: req.file.originalname,
+      mimetype: req.file.mimetype,
+      size: req.file.size,
+      url: publicUrl,
+      description,
+      tags: parsedTags,
+      patientId,
+      uploadedBy: req.user?.id || null,
+      createdAt: new Date().toISOString(),
+      edits: [],
+    };
+
+    // save metadata to Firestore
+    await db.collection("media").add(metadata);
+
+    return res.status(201).json({ message: "Upload successful", media: metadata });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Error uploading file" });
   }
 };
 
-exports.addDescription = async (req, res) => {
-  const { patientId, photoId } = req.params;
-  const { description } = req.body;
-  if (!description) return res.status(400).json({ error: 'Description required' });
-
-  const photoRef = db.collection('patients').doc(patientId).collection('photos').doc(photoId);
-  await photoRef.update({
-    description,
-    lastModified: admin.firestore.FieldValue.serverTimestamp(),
-  });
-  res.json({ message: 'Description updated' });
+export const listPatientMedia = async (req, res) => {
+  try {
+    const { patientId } = req.params;
+    const snap = await db.collection("media").where("patientId", "==", patientId).get();
+    const items = [];
+    snap.forEach((d) => items.push({ id: d.id, ...d.data() }));
+    return res.json({ media: items });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Error listing media" });
+  }
 };
 
-exports.addTags = async (req, res) => {
-  const { patientId, photoId } = req.params;
-  const { tags } = req.body;
-  if (!Array.isArray(tags)) return res.status(400).json({ error: 'Tags must be an array' });
+export const editDescription = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { description } = req.body;
 
-  const photoRef = db.collection('patients').doc(patientId).collection('photos').doc(photoId);
-  await photoRef.update({ tags });
-  res.json({ message: 'Tags added' });
+    const docRef = db.collection("media").doc(id);
+    const snapshot = await docRef.get();
+    if (!snapshot.exists) return res.status(404).json({ error: "Media not found" });
+
+    const data = snapshot.data();
+    const previous = { description: data.description, editedAt: new Date().toISOString(), editedBy: req.user?.id || null };
+
+    await docRef.update({
+      description,
+      edits: [...(data.edits || []), previous],
+    });
+
+    return res.json({ message: "Description updated" });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Error updating description" });
+  }
 };
 
-exports.getPhoto = async (req, res) => {
-  const { patientId, photoId } = req.params;
-  const photoSnap = await db.collection('patients').doc(patientId).collection('photos').doc(photoId).get();
-  if (!photoSnap.exists) return res.status(404).json({ error: 'Photo not found' });
+export const createPracticeSet = async (req, res) => {
+  try {
+    const { name, gameType, imageIds, patientId } = req.body;
 
-  const data = photoSnap.data();
-  const [url] = await bucket.file(data.filePath).getSignedUrl({
-    action: 'read',
-    expires: Date.now() + 60 * 60 * 1000
-  });
+    // validate that imageIds exist for this patient
+    const existPromises = imageIds.map((imgId) => db.collection("media").doc(imgId).get());
+    const docs = await Promise.all(existPromises);
+    const missing = docs.map((d, i) => ({ ok: d.exists, id: imageIds[i] })).filter((x) => !x.ok);
+    if (missing.length) return res.status(400).json({ error: "Some images not found", missing });
 
-  res.json({ ...data, url });
+    const payload = {
+      id: uuidv4(),
+      name,
+      gameType,
+      imageIds,
+      patientId,
+      createdBy: req.user?.id || null,
+      createdAt: new Date().toISOString(),
+    };
+
+    await db.collection("practiceSets").add(payload);
+    return res.status(201).json({ message: "Practice set created", set: payload });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Error creating practice set" });
+  }
+};
+
+export const listPracticeSets = async (req, res) => {
+  try {
+    const { patientId } = req.params;
+    const snap = await db.collection("practiceSets").where("patientId", "==", patientId).get();
+    const out = [];
+    snap.forEach((d) => out.push({ id: d.id, ...d.data() }));
+    return res.json({ sets: out });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Error listing practice sets" });
+  }
 };

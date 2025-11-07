@@ -1,51 +1,59 @@
-const express = require('express');
-const multer = require('multer');
-const { verifyToken } = require('../middlewares/authMiddleware');
-const {
-  uploadPhoto,
-  addDescription,
-  addTags,
-  getPhoto,
-} = require('../controllers/mediaController');
+import express from "express";
+import multer from "multer";
+import path from "path";
+import { uploadPhoto, listPatientMedia, editDescription, createPracticeSet, listPracticeSets } from "../controllers/mediaController.js";
+import { uploadSchema, createSetSchema, editDescriptionSchema } from "../schemas/mediaSchemas.js";
 
 const router = express.Router();
+
+// multer setup - store file in memory so we can upload to Firebase Storage
+const storage = multer.memoryStorage();
+
 const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 },
-});
-
-// HU 2.1 - Subir foto
-router.post('/:patientId/photos', verifyToken, upload.single('file'), uploadPhoto);
-
-// HU 2.2 - Agregar descripción
-router.post('/:patientId/photos/:photoId/description', verifyToken, addDescription);
-
-// HU 2.3 - Agregar etiquetas
-router.post('/:patientId/photos/:photoId/tags', verifyToken, addTags);
-
-// HU 2.5 - Obtener foto
-router.get('/:patientId/photos/:photoId', verifyToken, getPhoto);
-
-// 🔍 Endpoint de prueba de conexión a Firebase
-router.get('/test', async (req, res) => {
-  try {
-    // Probar Firestore
-    const testRef = req.app.locals.db.collection('test').doc('connection');
-    await testRef.set({ ok: true, timestamp: new Date().toISOString() });
-
-    // Probar acceso a Storage
-    const [files] = await req.app.locals.bucket.getFiles({ maxResults: 1 });
-    const storageOk = files.length >= 0;
-
-    res.json({
-      message: '✅ Conexión a Firebase correcta',
-      firestore: 'OK',
-      storage: storageOk ? 'OK' : 'Vacío',
-    });
-  } catch (error) {
-    console.error('❌ Error en la prueba de Firebase:', error);
-    res.status(500).json({ error: error.message });
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter: (req, file, cb) => {
+    const allowed = /jpeg|jpg|png/;
+    const mimetype = allowed.test(file.mimetype);
+    const ext = allowed.test(path.extname(file.originalname).toLowerCase());
+    if (mimetype && ext) return cb(null, true);
+    cb(new Error("Invalid file type. Only JPG and PNG are allowed."));
   }
 });
 
-module.exports = router;
+// Simple wrapper to use Joi schemas. We add a tiny inline validator to avoid circular imports.
+const joiMiddleware = (schema) => (req, res, next) => {
+  const data = { ...req.body };
+  // Normalize tags: accept array, JSON string, or comma-separated string
+  if (data.tags && typeof data.tags === "string") {
+    try {
+      const parsed = JSON.parse(data.tags);
+      data.tags = parsed;
+    } catch (e) {
+      // not valid JSON, try comma-separated
+      data.tags = data.tags.split(",").map((t) => t.trim()).filter(Boolean);
+    }
+  }
+
+  const { error } = schema.validate(data);
+  if (error) return res.status(400).json({ error: error.details[0].message });
+  next();
+};
+
+// Routes (public for now - no authentication required)
+// Upload photo (public for development)
+router.post("/upload", upload.single("photo"), joiMiddleware(uploadSchema), uploadPhoto);
+
+// List patient's media
+router.get("/patient/:patientId", listPatientMedia);
+
+// Edit description (public for development) - keeps history
+router.put("/:id/description", joiMiddleware(editDescriptionSchema), editDescription);
+
+// Create practice set (public for development)
+router.post("/sets", joiMiddleware(createSetSchema), createPracticeSet);
+
+// List practice sets
+router.get("/sets/:patientId", listPracticeSets);
+
+export default router;

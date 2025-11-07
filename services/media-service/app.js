@@ -1,17 +1,24 @@
-const express = require('express');
-const mediaRoutes = require('./src/routes/mediaRoutes');
-const { db, bucket } = require('./src/utils/firebaseAdmin');
-require('dotenv').config();
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import mediaRoutes from "./src/routes/mediaRoutes.js";
+import fs from "fs";
+import path from "path";
+
+dotenv.config();
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 
-// 🔗 Pasar Firestore y Storage a toda la app (disponibles en req.app.locals)
-app.locals.db = db;
-app.locals.bucket = bucket;
+// ensure uploads folder exists
+const uploadsDir = path.join(process.cwd(), "uploads");
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
-// Rutas principales del servicio de medios
-app.use('/api/media', mediaRoutes);
+// Serve uploads statically so local fallback files are accessible
+app.use('/uploads', express.static(uploadsDir));
 
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log(`Media Service running on port ${PORT}`));
+app.use("/api/media", mediaRoutes);
+
+const PORT = process.env.PORT || 4004;
+app.listen(PORT, () => console.log(`✅ Media-service running on port ${PORT}`));

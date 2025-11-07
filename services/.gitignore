@@ -1,0 +1,29 @@
+# Ignore node modules
+**/node_modules/
+
+# Environment files
+.env
+.env.*
+
+# Local uploads or generated files
+**/uploads/
+**/test-files/
+
+# Firebase service account keys (do NOT commit)
+**/serviceAccountKey.json
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE/editor folders
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+
+# Coverage and temp
+coverage/
+.cache/

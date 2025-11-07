@@ -1,0 +1,25 @@
+# Media-service specific ignores
+
+# Node modules
+node_modules/
+
+# Local uploads and test files
+uploads/
+test-files/
+
+# Local envs and secrets
+.env
+.env.*
+
+# Firebase service account (sensitive)
+src/config/serviceAccountKey.json
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
