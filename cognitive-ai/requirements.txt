@@ -1,8 +1,0 @@
-flask
-requests
-openai
-spacy
-gunicorn
-numpy
-stanfordnlp
-nltk
