@@ -48,6 +48,23 @@ services:
     networks:
       - douremember-network
 
+  # User Service
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: user-service
+    environment:
+      - NODE_ENV=development
+      - USERS_PORT=5001
+    expose:
+      - "5001"
+    volumes:
+      - ./user-service:/app
+      - /app/node_modules
+    networks:
+      - douremember-network
+
 networks:
   douremember-network:
     driver: bridge
