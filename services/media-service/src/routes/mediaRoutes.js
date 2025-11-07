@@ -44,7 +44,7 @@ const joiMiddleware = (schema) => (req, res, next) => {
 // Upload photo (public for development)
 router.post("/upload", upload.single("photo"), joiMiddleware(uploadSchema), uploadPhoto);
 
-// List patient's media
+// List patient's media (public - no tokens). Optional query param viewerId can be provided for audit logging.
 router.get("/patient/:patientId", listPatientMedia);
 
 // Edit description (public for development) - keeps history

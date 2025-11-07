@@ -95,10 +95,74 @@ export const uploadPhoto = async (req, res) => {
 export const listPatientMedia = async (req, res) => {
   try {
     const { patientId } = req.params;
+    // This endpoint is public by design for this simple implementation.
+    // Optional query parameter `viewerId` can be provided for audit logging (who viewed the media).
+    const viewerId = req.query.viewerId || null;
     const snap = await db.collection("media").where("patientId", "==", patientId).get();
     const items = [];
     snap.forEach((d) => items.push({ id: d.id, ...d.data() }));
-    return res.json({ media: items });
+
+    // Try to fetch reports from report-service if configured
+    let reports = [];
+    try {
+      const base = (process.env.REPORT_SERVICE_URL || "").replace(/\/$/, "");
+      if (base) {
+        const url = `${base}/api/reports/patient/${patientId}`;
+        // forward authorization header if present
+        const headers = {};
+        if (req.headers.authorization) headers["authorization"] = req.headers.authorization;
+        const fetchFn = globalThis.fetch || fetch;
+        const r = await fetchFn(url, { method: "GET", headers });
+        if (r.ok) {
+          const json = await r.json();
+          reports = json.reports || json || [];
+        } else {
+          console.warn("Report service returned non-OK", r.status);
+        }
+      }
+    } catch (err) {
+      console.warn("Could not fetch reports:", err.message || err);
+    }
+
+    // Create audit record for this access by calling audit-service if configured.
+    try {
+      const auditBase = (process.env.AUDIT_SERVICE_URL || "").replace(/\/$/, "");
+      const auditPayload = {
+        id: uuidv4(),
+        userId: viewerId,
+        action: "view_patient_media",
+        patientId,
+        service: "media-service",
+        mediaCount: items.length,
+        createdAt: new Date().toISOString(),
+      };
+
+      if (auditBase) {
+        const auditUrl = `${auditBase}/api/audits`;
+        const fetchFn = globalThis.fetch || fetch;
+        try {
+          const r = await fetchFn(auditUrl, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify(auditPayload),
+          });
+          if (!r.ok) {
+            console.warn("Audit service responded with non-OK", r.status);
+          }
+        } catch (err) {
+          console.warn("Could not call audit service:", err.message || err);
+          // fallback to local Firestore write
+          await db.collection("audits").add(auditPayload);
+        }
+      } else {
+        // No audit service configured, write directly to Firestore
+        await db.collection("audits").add(auditPayload);
+      }
+    } catch (e) {
+      console.warn("Failed to record audit:", e.message || e);
+    }
+
+    return res.json({ media: items, reports });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "Error listing media" });

@@ -7,7 +7,7 @@ export const createUser = async (req, res) => {
 
   try {
     if (!enabled || !db) throw new Error("Firestore not initialized");
-    const userRef = db.collection("users").doc(uid);
+  const userRef = db.collection("usuarios").doc(uid);
     await userRef.set({
       name: name || null,
       email: email || null,
@@ -27,7 +27,7 @@ export const createUser = async (req, res) => {
 export const getUsers = async (_req, res) => {
   try {
     if (!enabled || !db) throw new Error("Firestore not initialized");
-    const usersSnapshot = await db.collection("users").get();
+  const usersSnapshot = await db.collection("usuarios").get();
     if (usersSnapshot.empty) {
       return res.status(404).json({ error: "No se encontraron usuarios." });
     }
@@ -44,7 +44,7 @@ export const getUser = async (req, res) => {
   const { uid } = req.params;
   try {
     if (!enabled || !db) throw new Error("Firestore not initialized");
-    const userSnapshot = await db.collection("users").doc(uid).get();
+  const userSnapshot = await db.collection("usuarios").doc(uid).get();
     if (!userSnapshot.exists) {
       return res.status(404).json({ error: "Usuario no encontrado." });
     }
@@ -61,7 +61,7 @@ export const updateUser = async (req, res) => {
   const updates = req.body;
   try {
     if (!enabled || !db) throw new Error("Firestore not initialized");
-    const userRef = db.collection("users").doc(userId);
+  const userRef = db.collection("usuarios").doc(userId);
     const userSnapshot = await userRef.get();
     if (!userSnapshot.exists) {
       return res.status(404).json({ error: "Usuario no encontrado." });
@@ -82,7 +82,7 @@ export const updateUser = async (req, res) => {
 export const getUsersWithEvaluationsAndAudits = async (_req, res) => {
   try {
     if (!enabled || !db) throw new Error("Firestore not initialized");
-    const usersSnapshot = await db.collection("users").get();
+  const usersSnapshot = await db.collection("usuarios").get();
     if (usersSnapshot.empty) {
       return res.status(404).json({ error: "No se encontraron usuarios." });
     }
@@ -111,5 +111,24 @@ export const getUsersWithEvaluationsAndAudits = async (_req, res) => {
     const firebaseError = (error && error.code) || "unknown";
     const errorMessage = FIREBASE_ERRORS[firebaseError] || "Error al obtener los usuarios";
     return res.status(400).json({ error: errorMessage });
+  }
+};
+
+export const getMyPatients = async (req, res) => {
+  try {
+    if (!db) throw new Error("Firestore not initialized");
+    // doctorId is provided as path parameter since this endpoint is public (no tokens)
+    const { doctorId } = req.params;
+    if (!doctorId) return res.status(400).json({ error: "doctorId is required" });
+
+    // Query users in 'usuarios' collection where medicoTratante == doctorId and rol == 'paciente'
+    const usersSnapshot = await db.collection("usuarios").where("medicoTratante", "==", doctorId).where("rol", "==", "paciente").get();
+    if (usersSnapshot.empty) return res.status(200).json({ patients: [] });
+
+    const patients = usersSnapshot.docs.map((d) => ({ uid: d.id, ...d.data() }));
+    return res.status(200).json({ patients });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Error fetching patients for doctor" });
   }
 };
