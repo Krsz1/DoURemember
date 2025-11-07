@@ -1,111 +1,215 @@
+// src/pages/Dashboard.tsx
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
-import QuickCard from "../components/QuickCard";
-import StatsCard from "../components/StatsCard";
-import { Briefcase, Clock, Heart, Image } from "lucide-react";
+import {
+  Image,
+  Clock,
+  MessageSquare,
+  Calendar,
+  Activity,
+  Settings,
+  Smile,
+  CheckCircle,
+} from "lucide-react";
 
 export default function Dashboard() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-      <Header />
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white shadow-sm sticky top-0 z-10">
+        <Header />
+      </div>
+
       <main className="max-w-6xl mx-auto px-4 py-8">
-        {/* Hero / Greeting */}
+        {/* HERO: barra azul→verde (solo esta barra es colorida) */}
         <section className="mb-8">
-          <div className="rounded-2xl p-6 bg-gradient-to-r from-blue-50 to-green-50 border border-blue-50 shadow-sm flex flex-col sm:flex-row items-center gap-6">
+          <div className="rounded-2xl p-6 bg-gradient-to-r from-blue-400 to-green-300 text-white shadow-sm flex flex-col sm:flex-row items-center gap-6">
             <div className="flex-1">
-              <h2 className="text-2xl font-bold text-slate-800">Hola — Bienvenido a DoURemember</h2>
-              <p className="mt-2 text-slate-600">Registra recuerdos, crea recordatorios y mantén las memorias vivas.</p>
+              <h2 className="text-2xl font-bold">
+                Hola 👋 — Bienvenido a{" "}
+                <span className="font-extrabold">DoURemember</span>
+              </h2>
+              <p className="mt-2 opacity-95">
+                Registra recuerdos, crea recordatorios y mantén las memorias vivas cada día 🌿
+              </p>
             </div>
             <div className="grid grid-cols-2 gap-3 w-full sm:w-auto">
               <button
                 onClick={() => navigate("/memories")}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
-                aria-label="Ir a Recuerdos"
+                className="px-4 py-2 bg-white/10 border border-white/20 rounded-lg shadow hover:opacity-90 transition"
               >
-                Ver Recuerdos
+                Nuevo Recuerdo
               </button>
               <button
-                onClick={() => navigate("/memories")}
-                className="px-4 py-2 bg-white border rounded-lg shadow hover:bg-slate-50 transition"
-                aria-label="Nuevo recuerdo"
+                onClick={() => navigate("/notifications")}
+                className="px-4 py-2 bg-white/20 border border-white/30 rounded-lg shadow hover:opacity-90 transition"
               >
-                Nuevo recuerdo
+                Recordatorios
               </button>
             </div>
           </div>
         </section>
 
-        {/* Grid: Quick actions + Stats */}
+        {/* Menú principal (blanco) */}
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <QuickCard
+            <MenuCard
               title="Recuerdos"
               subtitle="Ver y gestionar recuerdos"
-              color="bg-white"
               icon={<Image className="w-6 h-6 text-blue-500" />}
               onClick={() => navigate("/memories")}
             />
-            <QuickCard
+            <MenuCard
               title="Recordatorios"
-              subtitle="Rutinas y alertas"
-              color="bg-white"
-              icon={<Clock className="w-6 h-6 text-amber-500" />}
+              subtitle="Rutinas y alertas diarias"
+              icon={<Clock className="w-6 h-6 text-green-500" />}
               onClick={() => navigate("/notifications")}
             />
-            <QuickCard
-              title="Soporte / Ayuda"
-              subtitle="Cómo usar la app"
-              color="bg-white"
-              icon={<Briefcase className="w-6 h-6 text-green-500" />}
-              onClick={() => alert("Sección de ayuda (UI)")}
+            <MenuCard
+              title="Mensajes del médico"
+              subtitle="Notas y recomendaciones"
+              icon={<MessageSquare className="w-6 h-6 text-cyan-500" />}
+              onClick={() => alert("Mensajes del médico (en desarrollo)")}
             />
-            <QuickCard
-              title="Favoritos"
-              subtitle="Recuerdos destacados"
-              color="bg-white"
-              icon={<Heart className="w-6 h-6 text-pink-500" />}
-              onClick={() => navigate("/memories")}
+            <MenuCard
+              title="Citas y rutinas"
+              subtitle="Agenda médica o actividades"
+              icon={<Calendar className="w-6 h-6 text-indigo-500" />}
+              onClick={() => alert("Citas y rutinas (en desarrollo)")}
+            />
+            <MenuCard
+              title="Estado del paciente"
+              subtitle="Bienestar cognitivo y emocional"
+              icon={<Activity className="w-6 h-6 text-teal-500" />}
+              onClick={() => navigate("/status")}
+            />
+            <MenuCard
+              title="Configuración"
+              subtitle="Cuenta, perfil y ajustes"
+              icon={<Settings className="w-6 h-6 text-slate-500" />}
+              onClick={() => navigate("/settings")}
             />
           </div>
 
+          {/* Sidebar (blanco) */}
           <aside className="space-y-4">
             <StatsCard label="Recuerdos" value="12" hint="Guardados por ti" />
-            <StatsCard label="Próx. recordatorio" value="Hoy • 17:00" hint="Toma una siesta" />
-            <StatsCard label="Última copia" value="2 días" hint="Backup automático" />
+            <StatsCard label="Próx. recordatorio" value="Hoy • 17:00" hint="Toma de medicación" />
+            <StatsCard label="Último contacto médico" value="Hace 3 días" hint="Revisión de rutina" />
+            <StatsCard label="Estado general" value="Estable ☀️" hint="Última actualización" />
           </aside>
         </section>
 
-        {/* Section: Recent memories preview */}
+        {/* Tareas del día (AHORA blanco, sin gradiente) */}
+        <section className="mb-8">
+          <h3 className="text-lg font-semibold text-slate-800 mb-3">Tareas del día 🗓️</h3>
+          <div className="space-y-3">
+            {[
+              { text: "Tomar medicación de la mañana" },
+              { text: "Ejercicio ligero (caminar 15 min)" },
+              { text: "Registrar un recuerdo feliz" },
+            ].map((task, i) => (
+              <div
+                key={i}
+                className="p-3 rounded-xl bg-white border border-slate-100 text-slate-700 shadow-sm"
+              >
+                {task.text}
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Estado del día (AHORA en blanco, sin gradiente) */}
+        <section className="mb-10">
+          <h3 className="text-lg font-semibold text-slate-800 mb-4">Estado del día ☁️</h3>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="p-5 rounded-2xl bg-white border border-slate-100 shadow-sm">
+              <div className="flex items-center gap-2 mb-1">
+                <Smile className="text-green-500" size={22} />
+                <h4 className="font-semibold text-slate-800">Estado emocional</h4>
+              </div>
+              <p className="text-slate-600 font-medium">Feliz y tranquilo 💚</p>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-white border border-slate-100 shadow-sm">
+              <div className="flex items-center gap-2 mb-1">
+                <CheckCircle className="text-blue-500" size={22} />
+                <h4 className="font-semibold text-slate-800">Rutinas activas</h4>
+              </div>
+              <p className="text-slate-600 font-medium">4 pendientes hoy</p>
+            </div>
+          </div>
+
+          <div className="mt-4 p-5 rounded-2xl bg-white border border-gray-100 shadow-sm text-center">
+            <p className="italic text-slate-700">
+              “Cada recuerdo es una huella que el alma deja en el tiempo.”  
+              <br />— <span className="font-medium text-slate-800">DoURemember</span> 🌱
+            </p>
+          </div>
+        </section>
+
+        {/* Recuerdos recientes */}
         <section>
-          <h3 className="text-lg font-semibold text-slate-800 mb-4">Recuerdos recientes</h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-slate-800">Recuerdos recientes 🌸</h3>
+            <button
+              onClick={() => navigate("/memories")}
+              className="px-4 py-2 bg-white border border-slate-200 text-slate-800 rounded-lg shadow-sm hover:shadow-md transition"
+            >
+              + Nuevo
+            </button>
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Ejemplos visuales; después los ligamos con datos */}
             {Array.from({ length: 6 }).map((_, i) => (
-              <article
+              <div
                 key={i}
-                className="bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition"
-                role="article"
-                aria-label={`Recuerdo ${i + 1}`}
+                className="rounded-2xl overflow-hidden bg-white border border-slate-100 shadow-sm hover:shadow-md transition"
               >
-                <div className="h-40 bg-gradient-to-tr from-blue-200 to-green-200 flex items-center justify-center">
+                {/* FOTO: esta parte SI mantiene el gradiente azul→verde */}
+                <div className="h-40 flex items-center justify-center bg-gradient-to-r from-blue-400 to-green-300">
                   <Image className="w-12 h-12 text-white/90" />
                 </div>
+
                 <div className="p-4">
                   <h4 className="font-semibold text-slate-800">Título del recuerdo {i + 1}</h4>
-                  <p className="text-sm text-slate-500 mt-2">Una breve descripción para contextualizar este recuerdo.</p>
-                  <div className="mt-3 flex gap-2">
-                    <button className="text-sm px-3 py-1 rounded bg-blue-50 text-blue-700">Ver</button>
-                    <button className="text-sm px-3 py-1 rounded bg-white border">Editar</button>
-                  </div>
+                  <p className="text-sm text-slate-500 mt-1">
+                    Una breve descripción de este recuerdo significativo.
+                  </p>
                 </div>
-              </article>
+              </div>
             ))}
           </div>
         </section>
       </main>
+    </div>
+  );
+}
+
+// Subcomponentes
+function MenuCard({ title, subtitle, icon, onClick }: any) {
+  return (
+    <button
+      onClick={onClick}
+      className="rounded-2xl bg-white border border-slate-100 p-5 text-left shadow-sm hover:shadow-md transition"
+    >
+      <div className="flex items-center gap-3 mb-2">
+        {icon}
+        <h4 className="font-semibold text-slate-800">{title}</h4>
+      </div>
+      <p className="text-sm text-slate-600">{subtitle}</p>
+    </button>
+  );
+}
+
+function StatsCard({ label, value, hint }: any) {
+  return (
+    <div className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm">
+      <h4 className="text-sm text-slate-500">{label}</h4>
+      <p className="text-xl font-semibold text-slate-800 mt-1">{value}</p>
+      <p className="text-xs text-slate-500 mt-1">{hint}</p>
     </div>
   );
 }

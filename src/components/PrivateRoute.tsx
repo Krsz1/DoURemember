@@ -1,6 +1,10 @@
 import { Navigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
 import type { JSX } from "react";
+
+// ⚙️ Modo temporal: autenticación simulada (para desarrollo sin Firebase)
+const useAuth = () => {
+  return { user: { name: "Demo User" }, loading: false };
+};
 
 interface Props {
   children: JSX.Element;
@@ -11,12 +15,13 @@ function PrivateRoute({ children }: Props) {
 
   if (loading) {
     return (
-      <div className="h-screen flex items-center justify-center text-lg">
+      <div className="h-screen flex items-center justify-center text-lg text-gray-700">
         Cargando...
       </div>
     );
   }
 
+  // 🔸 Durante desarrollo: siempre deja entrar (ya que Firebase no está activo)
   return user ? children : <Navigate to="/" replace />;
 }
 
