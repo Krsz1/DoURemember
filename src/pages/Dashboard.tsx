@@ -16,14 +16,15 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Header (actualizado con acceso a Perfil desde Header.tsx) */}
       <div className="bg-white shadow-sm sticky top-0 z-10">
         <Header />
       </div>
 
-      <main className="max-w-6xl mx-auto px-4 py-8">
-        {/* HERO: barra azul→verde (solo esta barra es colorida) */}
+      {/* Contenido principal */}
+      <main className="flex-1 max-w-6xl mx-auto px-4 py-8">
+        {/* HERO: barra azul→verde */}
         <section className="mb-8">
           <div className="rounded-2xl p-6 bg-gradient-to-r from-blue-400 to-green-300 text-white shadow-sm flex flex-col sm:flex-row items-center gap-6">
             <div className="flex-1">
@@ -102,7 +103,7 @@ export default function Dashboard() {
           </aside>
         </section>
 
-        {/* Tareas del día (AHORA blanco, sin gradiente) */}
+        {/* Tareas del día */}
         <section className="mb-8">
           <h3 className="text-lg font-semibold text-slate-800 mb-3">Tareas del día 🗓️</h3>
           <div className="space-y-3">
@@ -121,7 +122,7 @@ export default function Dashboard() {
           </div>
         </section>
 
-        {/* Estado del día (AHORA en blanco, sin gradiente) */}
+        {/* Estado del día */}
         <section className="mb-10">
           <h3 className="text-lg font-semibold text-slate-800 mb-4">Estado del día ☁️</h3>
           <div className="grid sm:grid-cols-2 gap-4">
@@ -168,7 +169,6 @@ export default function Dashboard() {
                 key={i}
                 className="rounded-2xl overflow-hidden bg-white border border-slate-100 shadow-sm hover:shadow-md transition"
               >
-                {/* FOTO: esta parte SI mantiene el gradiente azul→verde */}
                 <div className="h-40 flex items-center justify-center bg-gradient-to-r from-blue-400 to-green-300">
                   <Image className="w-12 h-12 text-white/90" />
                 </div>

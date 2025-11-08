@@ -1,13 +1,12 @@
 import { Navigate } from "react-router-dom";
-import type { JSX } from "react";
+import React from "react"; // 👈 Importa React completo (para usar React.ReactNode)
 
-// ⚙️ Modo temporal: autenticación simulada (para desarrollo sin Firebase)
 const useAuth = () => {
   return { user: { name: "Demo User" }, loading: false };
 };
 
 interface Props {
-  children: JSX.Element;
+  children: React.ReactNode; // 👈 Cambiado de JSX.Element → React.ReactNode
 }
 
 function PrivateRoute({ children }: Props) {
@@ -21,8 +20,7 @@ function PrivateRoute({ children }: Props) {
     );
   }
 
-  // 🔸 Durante desarrollo: siempre deja entrar (ya que Firebase no está activo)
-  return user ? children : <Navigate to="/" replace />;
+  return user ? <>{children}</> : <Navigate to="/" replace />; // 👈 Envuelto en fragmento
 }
 
 export default PrivateRoute;
