@@ -65,6 +65,33 @@ services:
     networks:
       - douremember-network
 
+  # Game Service (photo viewer / interactions)
+  game-service:
+    build:
+      context: ./game-service
+      dockerfile: Dockerfile
+    container_name: game-service
+    environment:
+      - NODE_ENV=development
+      - GAME_PORT=5020
+      # By default forwarding to host's audit-service; change if audit-service runs in compose
+      - AUDIT_SERVICE_URL=http://host.docker.internal:5010/api/audits
+      # MEDIA_SERVICE_URL points to the media-service which provides Cloudinary/Firebase URLs.
+      # When running media-service separately on the host keep the default below (host.docker.internal).
+      # If you add `media-service` to this compose, change to: http://media-service:4004
+      - MEDIA_SERVICE_URL=http://host.docker.internal:4004
+      # Optional: set GAME_HMAC_SECRET to enable HMAC-SHA256 signing of interaction payloads
+      # - GAME_HMAC_SECRET=your-secret-here
+    ports:
+      - "5020:5020"
+    expose:
+      - "5020"
+    volumes:
+      - ./game-service:/app
+      - /app/node_modules
+    networks:
+      - douremember-network
+
 networks:
   douremember-network:
     driver: bridge
