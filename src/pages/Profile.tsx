@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { User, Trash2 } from "lucide-react";
-import { useAuth } from "../context/AuthContext"; // Solo hook del contexto
+import { User, Trash2, KeyRound } from "lucide-react";
+import { useAuth } from "../context/AuthContext"; // Hook del contexto simulado
 
 export default function Profile() {
-  const { user } = useAuth(); // Simula el usuario autenticado
+  const { user } = useAuth(); // Usuario autenticado (simulado)
   const navigate = useNavigate();
 
-  // Estados temporales (simulados) para datos del paciente y cuidador
-  const [patient, setPatient] = useState({
+  // Estados simulados para datos del paciente y cuidador
+  const [patient] = useState({
     nombre: "Ana María López",
     documento: "1023456789",
     correo: "ana.lopez@example.com",
@@ -16,7 +16,7 @@ export default function Profile() {
     foto: "https://via.placeholder.com/120?text=Foto+Paciente",
   });
 
-  const [caregiver, setCaregiver] = useState({
+  const [caregiver] = useState({
     nombre: "Carlos Jiménez",
     documento: "1098765432",
     correo: "carlos.jimenez@example.com",
@@ -24,9 +24,13 @@ export default function Profile() {
   });
 
   const handleDeleteAccount = () => {
-    // 🚧 Aquí tus compañeros conectarán la función real
-    // (eliminar usuario de Firebase y Firestore)
+    // 🚧 Pendiente de integración con backend
     alert("Función de eliminar cuenta pendiente de integración backend");
+  };
+
+  const handleResetPassword = () => {
+    // 🚧 Aquí tus compañeros conectarán el envío real del correo de restablecimiento
+    alert("Se enviará un enlace de restablecimiento al correo del usuario (pendiente de backend)");
   };
 
   return (
@@ -73,8 +77,18 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* Botón de eliminar cuenta */}
-        <div className="mt-8 border-t border-gray-200 pt-6">
+        {/* Botones de acciones */}
+        <div className="mt-8 border-t border-gray-200 pt-6 space-y-3">
+          {/* 🔐 Restablecer contraseña */}
+          <button
+            onClick={handleResetPassword}
+            className="flex items-center justify-center w-full gap-2 py-3 text-white bg-blue-500 hover:bg-blue-600 rounded-2xl shadow-md transition-all duration-300"
+          >
+            <KeyRound className="w-5 h-5" />
+            Restablecer contraseña
+          </button>
+
+          {/* 🗑️ Eliminar cuenta */}
           <button
             onClick={handleDeleteAccount}
             className="flex items-center justify-center w-full gap-2 py-3 text-white bg-red-500 hover:bg-red-600 rounded-2xl shadow-md transition-all duration-300"
