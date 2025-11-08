@@ -6,7 +6,7 @@ import Profile from "./pages/Profile";
 import PrivateRoute from "./components/PrivateRoute";
 import DoctorDashboard from "./pages/DoctorDashboard";
 import JuegoMemoria from "./pages/JuegoMemoria";
-
+import JuegoPalabras from "./pages/JuegoPalabras";
 
 function App() {
   return (
@@ -46,6 +46,14 @@ function App() {
           element={
             <PrivateRoute>
              <JuegoMemoria />
+            </PrivateRoute>
+          }
+        />
+      <Route
+          path="/JuegoPalabras"
+          element={
+            <PrivateRoute>
+              <JuegoPalabras /> {/* ✅ Nueva ruta de perfil */}
             </PrivateRoute>
           }
         />
