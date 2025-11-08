@@ -42,7 +42,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {/* Juego 1 */}
             <div
-              onClick={() => navigate("/juego-memoria")}
+              onClick={() => navigate("/juegos/memoria")}
               className="cursor-pointer bg-white shadow-md hover:shadow-lg transition-all rounded-2xl p-6 flex flex-col items-center justify-center hover:bg-blue-50"
             >
               <Gamepad2 className="w-10 h-10 text-blue-500 mb-3" />
