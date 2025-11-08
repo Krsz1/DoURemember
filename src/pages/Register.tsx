@@ -148,7 +148,7 @@ const Register = () => {
             >
               <option value="">Selecciona tu rol</option>
               <option value="medico">Médico</option>
-              <option value="cuidador">Cuidador (o responsable del paciente)</option>
+              <option value="cuidador">Paciente/Cuidador</option>
             </select>
           </div>
 

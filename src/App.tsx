@@ -4,6 +4,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile"; 
 import PrivateRoute from "./components/PrivateRoute";
+import DoctorDashboard from "./pages/DoctorDashboard";
 
 function App() {
   return (
@@ -27,6 +28,14 @@ function App() {
           element={
             <PrivateRoute>
               <Profile /> {/* ✅ Nueva ruta de perfil */}
+            </PrivateRoute>
+          }
+        />
+      <Route
+          path="/doctor"
+          element={
+            <PrivateRoute>
+              <DoctorDashboard /> {/* ✅ Nueva ruta de perfil */}
             </PrivateRoute>
           }
         />
