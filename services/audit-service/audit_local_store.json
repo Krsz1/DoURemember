@@ -1,0 +1,16 @@
+[
+  {
+    "id": "test123",
+    "userId": "dev",
+    "action": "test"
+  },
+  {
+    "id": "720dcab9-7266-4a5a-b02f-7f3a7a8e788d",
+    "userId": "dev",
+    "action": "view_patient_media",
+    "patientId": "test-patient",
+    "service": "media-service",
+    "mediaCount": 2,
+    "createdAt": "2025-11-07T23:16:29.484Z"
+  }
+]

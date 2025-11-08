@@ -9,6 +9,7 @@ import {
 } from "../controllers/userController.js";
 import { validate } from "../middlewares/validate.js";
 import { createUserSchema, updateUserSchema } from "../schemas/userSchemas.js";
+import { authenticate, requireRole } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 

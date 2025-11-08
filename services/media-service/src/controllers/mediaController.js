@@ -98,6 +98,34 @@ export const listPatientMedia = async (req, res) => {
     // This endpoint is public by design for this simple implementation.
     // Optional query parameter `viewerId` can be provided for audit logging (who viewed the media).
     const viewerId = req.query.viewerId || null;
+
+    // If Firestore is not configured, return empty media and reports (development fallback)
+    if (!db) {
+      // still attempt to notify audit-service about the access
+      const auditBase = (process.env.AUDIT_SERVICE_URL || "").replace(/\/$/, "");
+      const auditPayload = {
+        id: uuidv4(),
+        userId: viewerId,
+        action: "view_patient_media",
+        patientId,
+        service: "media-service",
+        mediaCount: 0,
+        createdAt: new Date().toISOString(),
+      };
+      if (auditBase) {
+        const fetchFn = globalThis.fetch || fetch;
+        try {
+          await fetchFn(`${auditBase}/api/audits`, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify(auditPayload),
+          });
+        } catch (err) {
+          // ignore
+        }
+      }
+      return res.json({ media: [], reports: [] });
+    }
     const snap = await db.collection("media").where("patientId", "==", patientId).get();
     const items = [];
     snap.forEach((d) => items.push({ id: d.id, ...d.data() }));
@@ -137,6 +165,7 @@ export const listPatientMedia = async (req, res) => {
         createdAt: new Date().toISOString(),
       };
 
+      const forceAudit = (process.env.FORCE_AUDIT_SERVICE || "false").toLowerCase() === "true";
       if (auditBase) {
         const auditUrl = `${auditBase}/api/audits`;
         const fetchFn = globalThis.fetch || fetch;
@@ -148,11 +177,16 @@ export const listPatientMedia = async (req, res) => {
           });
           if (!r.ok) {
             console.warn("Audit service responded with non-OK", r.status);
+            if (!forceAudit) {
+              await db.collection("audits").add(auditPayload);
+            }
           }
         } catch (err) {
           console.warn("Could not call audit service:", err.message || err);
-          // fallback to local Firestore write
-          await db.collection("audits").add(auditPayload);
+          // fallback to local Firestore write unless forced to use audit-service only
+          if (!forceAudit) {
+            await db.collection("audits").add(auditPayload);
+          }
         }
       } else {
         // No audit service configured, write directly to Firestore

@@ -116,7 +116,8 @@ export const getUsersWithEvaluationsAndAudits = async (_req, res) => {
 
 export const getMyPatients = async (req, res) => {
   try {
-    if (!db) throw new Error("Firestore not initialized");
+    // If Firestore is not configured, return an empty list (development fallback)
+    if (!db) return res.status(200).json({ patients: [] });
     // doctorId is provided as path parameter since this endpoint is public (no tokens)
     const { doctorId } = req.params;
     if (!doctorId) return res.status(400).json({ error: "doctorId is required" });
