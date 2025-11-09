@@ -1,12 +1,16 @@
-FROM node:18-alpine
+FROM node:22-alpine
+
+# Aumenta el límite de memoria disponible para node
+ENV NODE_OPTIONS="--max-old-space-size=2048"
+ 
 WORKDIR /app
 
-# Install build dependencies
-COPY package.json package-lock.json* ./
-RUN npm install --production || true
+COPY package*.json ./
 
-# Copy rest of the app
-COPY . ./
+RUN npm install
 
-EXPOSE 5020
-CMD ["sh", "-c", "npm install && npm start"]
+COPY . .
+
+EXPOSE 5003
+
+CMD ["node", "src/app.js"]
