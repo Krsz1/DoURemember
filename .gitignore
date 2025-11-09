@@ -7,29 +7,32 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Build outputs
 node_modules
 dist
 dist-ssr
 *.local
+
+# Environment files
 **.env
 
 # Editor directories and files
-**.vscode
 .vscode/*
+**.vscode
 ../.vscode/*
 !.vscode/extensions.json
 .idea
+
+# System files
 .DS_Store
+
+# Project files
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
-<<<<<<< HEAD
-*.sw?
-=======
 *.sw?
 
 # Firebase credentials
 firebase.json
 *.serviceAccountKey.json
->>>>>>> 301fb87b6d3f43ee8f3a3d0869b05d8213f92679
