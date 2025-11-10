@@ -23,7 +23,7 @@ app.use(cors({
 
 // Rutas
 app.use("/api/media", mediaRoutes);
-app.use("/api/test", testRoutes);
+app.use("/api/media/test", testRoutes);
 
 const PORT = process.env.MEDIA_SERVICE_PORT || 4001;
 app.listen(PORT, () => console.log(`🚀 Media-Service escuchando en puerto ${PORT}`));
