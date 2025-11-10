@@ -1,76 +1,109 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 
-interface ButtonProps {
-  children: React.ReactNode;
-  onClick?: () => void;
-  className?: string;
+interface Pair {
+  id: number;
+  image: string;
+  label: string;
 }
 
-// ✅ Botón genérico estilizado con Tailwind
-const Button: React.FC<ButtonProps> = ({ children, onClick, className = "" }) => (
-  <button
-    onClick={onClick}
-    className={`px-4 py-2 rounded-lg font-medium transition-colors ${className}`}
-  >
-    {children}
-  </button>
-);
-
-export default function JuegoPalabras() {
+export default function JuegoEmparejar() {
   const navigate = useNavigate();
 
-  // 🔤 Palabras con sus pistas
-  const palabras = [
-    { palabra: "Memoria", pista: "Capacidad de recordar" },
-    { palabra: "Cerebro", pista: "Órgano del pensamiento" },
-    { palabra: "Aprender", pista: "Adquirir conocimiento" },
-    { palabra: "Atención", pista: "Concentrarse en algo" },
-    { palabra: "Recuerdo", pista: "Algo que no se olvida" },
-    { palabra: "Pensar", pista: "Actividad mental constante" },
-    { palabra: "Enseñar", pista: "Transmitir conocimiento" },
-    { palabra: "Razonar", pista: "Usar la lógica para entender" },
-    { palabra: "Palabra", pista: "Unidad básica del lenguaje" },
-    { palabra: "Lenguaje", pista: "Medio para comunicarnos" },
+  // ✅ Imágenes actualizadas y únicas
+  const initialPairs: Pair[] = [
+    {
+      id: 1,
+      image:
+        "https://images.unsplash.com/photo-1592194996308-7b43878e84a6?auto=format&fit=crop&w=400&q=80",
+      label: "Gato",
+    },
+    {
+      id: 2,
+      image:
+        "https://images.unsplash.com/photo-1560807707-8cc77767d783?auto=format&fit=crop&w=400&q=80",
+      label: "Oso",
+    },
+    {
+      id: 3,
+      image:
+        "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=400&q=80",
+      label: "Montaña",
+    },
+    {
+      id: 4,
+      image:
+        "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=400&q=80",
+      label: "Mar",
+    },
+    {
+      id: 5,
+      image:
+        "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=400&q=80",
+      label: "Bosque",
+    },
+    {
+      id: 6,
+      image:
+        "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=400&q=80",
+      label: "Desierto",
+    },
   ];
 
-  const [indice, setIndice] = useState(0);
-  const [respuesta, setRespuesta] = useState("");
-  const [mensaje, setMensaje] = useState("");
-  const [puntaje, setPuntaje] = useState(0);
+  const [pairs, setPairs] = useState<Pair[]>([]);
+  const [selected, setSelected] = useState<{ type: "image" | "label"; id: number } | null>(null);
+  const [matched, setMatched] = useState<number[]>([]);
+  const [score, setScore] = useState(0);
+  const [difficulty, setDifficulty] = useState<"facil" | "dificil">("facil");
+  const [showMessage, setShowMessage] = useState("");
 
-  const verificarRespuesta = () => {
-    if (
-      respuesta.trim().toLowerCase() ===
-      palabras[indice].palabra.toLowerCase()
-    ) {
-      setPuntaje((p) => p + 1);
-      setMensaje("✅ ¡Correcto!");
+  useEffect(() => {
+    setPairs([...initialPairs].sort(() => Math.random() - 0.5));
+  }, []);
+
+  const handleSelect = (type: "image" | "label", id: number) => {
+    if (matched.includes(id)) return;
+
+    if (!selected) {
+      setSelected({ type, id });
     } else {
-      setMensaje(`❌ Era: ${palabras[indice].palabra}`);
+      if (selected.type !== type) {
+        if (selected.id === id) {
+          setMatched((prev) => [...prev, id]);
+          setScore((s) => s + 1);
+          setShowMessage("✅ ¡Correcto!");
+          setTimeout(() => setShowMessage(""), 1000);
+        } else {
+          setShowMessage("❌ Intenta otra vez");
+          setTimeout(() => setShowMessage(""), difficulty === "facil" ? 1500 : 800);
+        }
+        setSelected(null);
+      }
     }
-
-    setTimeout(() => {
-      setMensaje("");
-      setRespuesta("");
-      setIndice((indice + 1) % palabras.length);
-    }, 1500);
   };
+
+  const resetGame = () => {
+    setMatched([]);
+    setScore(0);
+    setSelected(null);
+    setShowMessage("");
+    setPairs([...initialPairs].sort(() => Math.random() - 0.5));
+  };
+
+  const allMatched = matched.length === initialPairs.length;
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* 🌿 Barra superior */}
       <Header />
 
-      {/* 🌸 Contenido principal */}
-      <main className="flex-1 max-w-5xl mx-auto px-6 py-16">
-        {/* Encabezado y botón volver */}
+      <main className="flex-1 max-w-6xl mx-auto px-6 py-10">
+        {/* Encabezado */}
         <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">🔤 Juego de Palabras</h1>
+            <h1 className="text-3xl font-bold text-gray-800">🧩 Juego de Emparejar</h1>
             <p className="text-gray-600 mt-1">
-              Escribe la palabra correcta según la pista.
+              Empareja cada imagen con su etiqueta correspondiente.
             </p>
           </div>
 
@@ -82,45 +115,123 @@ export default function JuegoPalabras() {
           </button>
         </div>
 
-        {/* Tarjeta del juego */}
-        <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-md mx-auto text-center">
-          <p className="text-gray-600 mb-4">Pista:</p>
-          <div className="bg-blue-50 rounded-xl p-4 mb-6">
-            <p className="text-blue-700 font-medium text-lg">
-              {palabras[indice].pista}
-            </p>
-          </div>
-
-          <input
-            type="text"
-            value={respuesta}
-            onChange={(e) => setRespuesta(e.target.value)}
-            placeholder="Tu respuesta..."
-            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
-          />
-
-          <Button
-            onClick={verificarRespuesta}
-            className="bg-blue-600 text-white hover:bg-blue-700 w-full"
+        {/* Configuración */}
+        <div className="mb-8 flex gap-4 items-center flex-wrap">
+          <label className="font-medium text-gray-700">Dificultad:</label>
+          <select
+            value={difficulty}
+            onChange={(e) => setDifficulty(e.target.value as "facil" | "dificil")}
+            className="border border-gray-300 rounded-lg px-3 py-1 focus:ring-2 focus:ring-blue-500"
           >
-            Verificar
-          </Button>
+            <option value="facil">Fácil (con pistas)</option>
+            <option value="dificil">Difícil (sin pistas)</option>
+          </select>
 
-          {mensaje && (
-            <p
-              className={`mt-4 font-medium ${
-                mensaje.startsWith("✅") ? "text-green-600" : "text-red-600"
-              }`}
-            >
-              {mensaje}
-            </p>
-          )}
+          <button
+            onClick={resetGame}
+            className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition"
+          >
+            Reiniciar
+          </button>
 
-          <p className="text-gray-500 text-sm mt-6">
-            Puntaje:{" "}
-            <span className="font-semibold text-blue-600">{puntaje}</span>
+          <p className="ml-auto text-gray-600">
+            Puntaje: <span className="font-semibold text-blue-600">{score}</span>
           </p>
         </div>
+
+        {/* Tablero */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {/* Imágenes */}
+          <div>
+            <h2 className="text-center text-gray-700 font-semibold mb-3">Imágenes</h2>
+            <div className="grid grid-cols-2 gap-3">
+              {pairs.map((pair) => (
+                <div
+                  key={pair.id}
+                  onClick={() => handleSelect("image", pair.id)}
+                  draggable={!matched.includes(pair.id)}
+                  onDragStart={(e) =>
+                    e.dataTransfer.setData("pair-id", String(pair.id))
+                  }
+                  className={`cursor-pointer rounded-xl overflow-hidden shadow-md border-4 transition-all duration-200 ${
+                    selected?.type === "image" && selected.id === pair.id
+                      ? "border-blue-400"
+                      : matched.includes(pair.id)
+                      ? "border-green-400"
+                      : "border-transparent hover:border-blue-200"
+                  }`}
+                >
+                  <img
+                    src={pair.image}
+                    alt={pair.label}
+                    className="w-full h-28 object-cover"
+                    onError={(e) =>
+                      ((e.target as HTMLImageElement).src =
+                        "https://via.placeholder.com/400x200?text=Imagen+no+disponible")
+                    }
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Etiquetas */}
+          <div className="md:col-span-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            <h2 className="col-span-full text-center text-gray-700 font-semibold mb-3">
+              Etiquetas
+            </h2>
+            {pairs.map((pair) => (
+              <div
+                key={pair.id}
+                onClick={() => handleSelect("label", pair.id)}
+                onDrop={(e) => {
+                  const draggedId = Number(e.dataTransfer.getData("pair-id"));
+                  handleSelect("label", draggedId);
+                  handleSelect("image", pair.id);
+                }}
+                onDragOver={(e) => e.preventDefault()}
+                className={`bg-white p-3 rounded-xl shadow-sm text-center cursor-pointer border-2 transition-all duration-200 ${
+                  selected?.type === "label" && selected.id === pair.id
+                    ? "border-blue-400"
+                    : matched.includes(pair.id)
+                    ? "border-green-400 bg-green-50"
+                    : "border-gray-200 hover:border-blue-200"
+                }`}
+              >
+                <span className="text-gray-700 font-medium">{pair.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Mensaje */}
+        {showMessage && (
+          <p
+            className={`mt-6 text-center text-lg font-semibold ${
+              showMessage.startsWith("✅") ? "text-green-600" : "text-red-600"
+            }`}
+          >
+            {showMessage}
+          </p>
+        )}
+
+        {/* Final */}
+        {allMatched && (
+          <div className="mt-8 text-center">
+            <h2 className="text-2xl font-semibold text-green-600 mb-3">
+              🎉 ¡Completaste todos los pares!
+            </h2>
+            <p className="text-gray-700 mb-4">
+              Puntaje final: <span className="font-bold">{score}</span>
+            </p>
+            <button
+              onClick={resetGame}
+              className="bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 transition"
+            >
+              Jugar de nuevo
+            </button>
+          </div>
+        )}
       </main>
     </div>
   );

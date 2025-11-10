@@ -14,7 +14,21 @@ export default function JuegoMemoria() {
   const [busy, setBusy] = useState(false);
   const [isConfigured, setIsConfigured] = useState(false);
 
-  // Cargar configuración previa
+  // --- Estados del modo cognitivo ---
+  const [isCognitiveMode, setIsCognitiveMode] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [showQuestions, setShowQuestions] = useState(false);
+  const [answers, setAnswers] = useState<
+    { image: string; question: string; answer: string }[]
+  >([]);
+  const [scoreData, setScoreData] = useState<{
+    aciertos: number;
+    errores: number;
+    omisiones: number;
+    score: number;
+  } | null>(null);
+
+  // --- Cargar configuración previa ---
   useEffect(() => {
     const saved = localStorage.getItem("memoriaConfig");
     if (saved) {
@@ -24,7 +38,7 @@ export default function JuegoMemoria() {
     }
   }, []);
 
-  // --- Función para subir imágenes ---
+  // --- Subir imágenes ---
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
@@ -44,7 +58,7 @@ export default function JuegoMemoria() {
     });
   };
 
-  // --- Función para cambiar etiquetas ---
+  // --- Cambiar etiquetas ---
   const handleLabelChange = (index: number, value: string) => {
     const updated = [...images];
     updated[index].label = value;
@@ -52,23 +66,7 @@ export default function JuegoMemoria() {
     localStorage.setItem("memoriaConfig", JSON.stringify(updated));
   };
 
-  // --- Validar configuración ---
-  const startGame = () => {
-    if (images.length < 2) {
-      alert("Debes subir al menos dos imágenes para jugar.");
-      return;
-    }
-
-    const shuffled = shuffle([...images, ...images]);
-    setCards(shuffled);
-    setFlipped([]);
-    setMatched([]);
-    setMoves(0);
-    setBusy(false);
-    setIsConfigured(true);
-  };
-
-  // --- Funciones del juego ---
+  // --- Mezclar ---
   const shuffle = (arr: any[]) => {
     const a = arr.slice();
     for (let i = a.length - 1; i > 0; i--) {
@@ -78,6 +76,23 @@ export default function JuegoMemoria() {
     return a;
   };
 
+  // --- Iniciar juego clásico ---
+  const startGame = () => {
+    if (images.length < 2) {
+      alert("Debes subir al menos dos imágenes para jugar.");
+      return;
+    }
+    const shuffled = shuffle([...images, ...images]);
+    setCards(shuffled);
+    setFlipped([]);
+    setMatched([]);
+    setMoves(0);
+    setBusy(false);
+    setIsConfigured(true);
+    setIsCognitiveMode(false);
+  };
+
+  // --- Lógica del clásico ---
   const handleFlip = (index: number) => {
     if (busy) return;
     if (flipped.includes(index) || matched.includes(index)) return;
@@ -107,11 +122,84 @@ export default function JuegoMemoria() {
 
   const allMatched = cards.length > 0 && matched.length === cards.length;
 
-  // --- Reiniciar juego ---
   const resetGame = () => {
     setIsConfigured(false);
+    setIsCognitiveMode(false);
+    setScoreData(null);
+    setAnswers([]);
   };
 
+  // --- Iniciar modo cognitivo ---
+  const startCognitiveMode = () => {
+    if (images.length === 0) {
+      alert("Debes tener al menos una imagen configurada.");
+      return;
+    }
+    setIsCognitiveMode(true);
+    setCurrentIndex(0);
+    setShowQuestions(false);
+    setScoreData(null);
+    setAnswers([]);
+    setTimeout(() => setShowQuestions(true), 3000);
+  };
+
+  const handleAnswer = (question: string, answer: string) => {
+    const currentImage = images[currentIndex].src;
+    setAnswers((prev) => {
+      const existing = prev.find(
+        (a) => a.image === currentImage && a.question === question
+      );
+      if (existing) {
+        return prev.map((a) =>
+          a.image === currentImage && a.question === question
+            ? { ...a, answer }
+            : a
+        );
+      }
+      return [...prev, { image: currentImage, question, answer }];
+    });
+  };
+
+  const nextImage = () => {
+    if (currentIndex < images.length - 1) {
+      setCurrentIndex((i) => i + 1);
+      setShowQuestions(false);
+      setTimeout(() => setShowQuestions(true), 3000);
+    } else {
+      finishCognitiveGame();
+    }
+  };
+
+  // --- Cálculo de resultados (HU 4.2 y HU 4.3) ---
+  const finishCognitiveGame = () => {
+    let aciertos = 0;
+    let errores = 0;
+    let omisiones = 0;
+
+    images.forEach((img) => {
+      const resp = answers.find((a) => a.image === img.src);
+      if (!resp) {
+        omisiones++;
+      } else {
+        const match = resp.answer
+          .toLowerCase()
+          .includes(img.label.toLowerCase());
+        if (match) aciertos++;
+        else errores++;
+      }
+    });
+
+    let score = aciertos * 10 - errores * 5;
+    if (score < 0) score = 0;
+    if (score > 100) score = 100;
+
+    const result = { aciertos, errores, omisiones, score };
+    setScoreData(result);
+    localStorage.setItem("evaluacionCognitiva", JSON.stringify(result));
+    console.log("Resultado cognitivo:", result);
+  };
+
+  // --- Render ---
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
@@ -121,11 +209,11 @@ export default function JuegoMemoria() {
           <div>
             <h1 className="text-3xl font-bold text-gray-800">🧩 Juego de Memoria</h1>
             <p className="text-gray-600 mt-1">
-              Sube tus propias imágenes, asígnales etiquetas y juega.
+              Sube tus propias imágenes, asígnales etiquetas y juega o realiza una
+              evaluación cognitiva.
             </p>
           </div>
 
-          {/* Volver */}
           <button
             onClick={() => navigate("/dashboard")}
             className="bg-white border border-slate-200 px-4 py-2 rounded-xl text-slate-700 shadow-sm hover:shadow-md transition hover:bg-slate-50"
@@ -175,20 +263,27 @@ export default function JuegoMemoria() {
 
             <button
               onClick={startGame}
-              className="bg-blue-600 text-white px-6 py-2 rounded-xl hover:bg-blue-700 transition"
+              className="bg-blue-600 text-white px-6 py-2 rounded-xl hover:bg-blue-700 transition mr-3"
             >
-              Iniciar juego
+              Iniciar juego clásico
+            </button>
+
+            {/* Botón ajustado — solo prepara modo cognitivo */}
+            <button
+              onClick={startCognitiveMode}
+              className="bg-purple-600 text-white px-6 py-2 rounded-xl hover:bg-purple-700 transition"
+            >
+              Preparar evaluación cognitiva
             </button>
           </div>
         )}
 
-        {/* JUEGO */}
-        {isConfigured && (
+        {/* --- MODO CLÁSICO --- */}
+        {isConfigured && !isCognitiveMode && (
           <>
             <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
               <div className="text-gray-700">
-                Movimientos: <span className="font-semibold">{moves}</span>
-                {" — "}
+                Movimientos: <span className="font-semibold">{moves}</span> —{" "}
                 Parejas encontradas:{" "}
                 <span className="font-semibold">{matched.length / 2}</span>
               </div>
@@ -211,37 +306,27 @@ export default function JuegoMemoria() {
             >
               {cards.map((card, idx) => {
                 const isFlipped = flipped.includes(idx) || matched.includes(idx);
-
                 return (
                   <button
                     key={idx}
                     onClick={() => handleFlip(idx)}
                     disabled={busy || matched.includes(idx)}
-                    aria-label={isFlipped ? card.label : "Carta boca abajo"}
-                    className={`relative aspect-square rounded-2xl shadow-md overflow-hidden transform transition-all duration-300
-                      ${
-                        isFlipped
-                          ? "bg-white"
-                          : "bg-gradient-to-br from-blue-500 to-indigo-500"
-                      }
-                      flex items-center justify-center focus:outline-none`}
+                    className={`relative aspect-square rounded-2xl shadow-md overflow-hidden transition-all duration-300 ${
+                      isFlipped
+                        ? "bg-white"
+                        : "bg-gradient-to-br from-blue-500 to-indigo-500"
+                    }`}
                   >
-                    {!isFlipped && (
+                    {!isFlipped ? (
                       <div className="absolute inset-0 flex items-center justify-center">
                         <div className="text-white text-2xl select-none">🎴</div>
                       </div>
-                    )}
-
-                    {isFlipped && (
+                    ) : (
                       <img
                         src={card.src}
-                        alt={card.label || "persona"}
+                        alt={card.label}
                         className="w-full h-full object-cover"
                       />
-                    )}
-
-                    {matched.includes(idx) && (
-                      <div className="absolute inset-0 bg-white/40 pointer-events-none animate-pulse" />
                     )}
                   </button>
                 );
@@ -262,6 +347,66 @@ export default function JuegoMemoria() {
               </div>
             )}
           </>
+        )}
+
+        {/* --- MODO COGNITIVO --- */}
+        {isCognitiveMode && (
+          <div className="bg-white shadow-md rounded-2xl p-6">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800">
+              Evaluación Cognitiva
+            </h2>
+
+            <img
+              src={images[currentIndex].src}
+              alt="recuerdo"
+              className="w-full h-64 object-cover rounded-xl mb-4"
+            />
+
+            {!showQuestions ? (
+              <p className="text-gray-600 text-center">
+                Observa la imagen durante unos segundos...
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {["¿Quién aparece?", "¿Dónde estaban?", "¿Qué estaban celebrando?"].map(
+                  (q) => (
+                    <div key={q}>
+                      <p className="font-medium text-gray-700 mb-2">{q}</p>
+                      <input
+                        type="text"
+                        onChange={(e) => handleAnswer(q, e.target.value)}
+                        className="border border-gray-300 rounded-lg px-3 py-1 w-full"
+                        placeholder="Tu respuesta..."
+                      />
+                    </div>
+                  )
+                )}
+                <button
+                  onClick={nextImage}
+                  className="bg-blue-600 text-white px-5 py-2 rounded-xl hover:bg-blue-700 transition"
+                >
+                  {currentIndex < images.length - 1 ? "Siguiente" : "Finalizar"}
+                </button>
+              </div>
+            )}
+
+            {scoreData && (
+              <div className="mt-6 text-center">
+                <h3 className="text-2xl font-semibold text-green-600">
+                  Puntaje final: {scoreData.score} / 100
+                </h3>
+                <p className="text-gray-700 mt-2">
+                  ✅ Aciertos: {scoreData.aciertos} | ❌ Errores: {scoreData.errores} | ⚪ Omisiones: {scoreData.omisiones}
+                </p>
+                <button
+                  onClick={resetGame}
+                  className="mt-4 bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 transition"
+                >
+                  Nueva evaluación
+                </button>
+              </div>
+            )}
+          </div>
         )}
       </main>
     </div>
