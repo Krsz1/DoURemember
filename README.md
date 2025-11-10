@@ -51,47 +51,76 @@ La interfaz está diseñada para ser sencilla y accesible tanto para pacientes c
 ```bash
 git clone https://github.com/tu-repositorio/DoURemember.git
 cd DoURemember
+```
+### Instalar Dependencias
 
-Instalar Dependencias
-
-Frontend (React):
-
+**Frontend (React):**
+```bash
 cd frontend
 npm install
-
-
-Backend (Node.js + Express):
-
-cd ../backend
+```
+**Backend (Node.js + Express):**
+```bash
+cd ../services
 npm install
+```
+### Configurar Firebase
 
-Configurar Firebase
+1. Cree un proyecto en [Firebase Console](https://console.firebase.google.com/)
+2. Configure **Firestore**, **Authentication** y **Cloud Messaging** según sea necesario
+3. Descargue el archivo de configuración desde la consola de Firebase
+4. Coloque la configuración en las siguientes ubicaciones:
+   - `frontend/src/firebaseConfig.json`
+   - `backend/firebaseConfig.json`
 
-Cree un proyecto en Firebase Console.
+### Configurar Variables de Entorno
 
-Configure Firestore, Authentication y Cloud Messaging según sea necesario.
+**Frontend (`frontend/.env`):**
 
-Descargue el archivo firebaseConfig.json desde la consola de Firebase y colóquelo en las siguientes ubicaciones:
+```env
+VITE_FIREBASE_APIKEY=clave_api_firebase
+VITE_FIREBASE_AUTHDOMAIN=dominio_autenticacion_firebase
+VITE_FIREBASE_PROJECTID=id_proyecto_firebase
+VITE_FIREBASE_STORAGEBUCKET=bucket_almacenamiento_firebase
+VITE_FIREBASE_MESSAGING_SENDERID=id_mensajeria_firebase
+VITE_FIREBASE_APPID=id_aplicacion_firebase
+VITE_MONGODB_URI=tu_conexion_mongodb
+```
 
-frontend/src/firebaseConfig.json
+**Backend (`backend/.env`):**
 
-backend/firebaseConfig.json
+```env
+FIREBASE_API_KEY=clave_api_firebase
+FIREBASE_AUTH_DOMAIN=dominio_autenticacion_firebase
+FIREBASE_PROJECT_ID=id_proyecto_firebase
+FIREBASE_STORAGE_BUCKET=bucket_almacenamiento_firebase
+FIREBASE_MESSAGING_SENDER_ID=id_mensajeria_firebase
+FIREBASE_APP_ID=id_aplicacion_firebase
+MONGODB_URI=tu_conexion_mongodb
+PORT=5000
+```
 
-Ejecutar la Aplicación
+### Ejecutar la Aplicación
 
-Backend:
+**Backend:**
 
+```bash
 cd backend
 npm start
+```
 
+**Frontend:**
 
-Frontend:
-
+```bash
 cd frontend
 npm start
+```
 
-Estructura General del Proyecto
+---
 
+## Estructura General del Proyecto
+
+```
 DoURemember/
 ├── frontend/
 │   ├── src/
@@ -101,97 +130,30 @@ DoURemember/
 │   │   └── styles/           # Archivos de estilo
 │   └── public/
 │
-├── backend/
-│   ├── src/
-│   │   ├── controllers/      # Controladores del backend
-│   │   ├── models/           # Modelos de MongoDB
-│   │   ├── routes/           # Definición de rutas API
-│   │   ├── services/         # Lógica de negocio
-│   │   └── utils/            # Utilidades (validaciones, envío de correos)
-│   └── firebaseConfig.json
+├── services/                     # Microservicios del backend
+│   ├── auth-service/             # Autenticación y gestión de usuarios
+│   ├── media-service/            # Gestión de contenido multimedia
+│   ├── notification-service/     # Envío de notificaciones y recordatorios
+│   └── report-service/           # Generación de reportes y métricas
 │
 ├── docs/                     # Documentación técnica y SRS
-├── package.json
-└── README.md
+├── .gitignore                    # Archivos ignorados por Git
+├── package.json                  # Dependencias globales del proyecto
+└── README.md                     # Documentación principal
+```
 
-Descripción de los Módulos
-1. Auth Service
+---
 
-Responsabilidad: Manejo de autenticación, autorización y gestión de usuarios.
-Entidades Principales:
+## Beneficios de la Arquitectura
 
-User: Información básica del usuario (correo, rol, estado).
-
-UserProfile: Datos complementarios (nombre, relación con el paciente).
-Funcionalidades:
-
-Registro e inicio de sesión.
-
-Validación de roles y permisos.
-
-Sincronización de usuarios con Firebase.
-
-2. Content Service
-
-Responsabilidad: Gestión de fotografías familiares y descripciones de referencia.
-Entidades Principales:
-
-Photo: Imagen y metadatos (nombre, descripción, etiquetas).
-
-MemorySet: Colección de fotografías asociadas a un paciente.
-Funcionalidades:
-
-Subida, edición y eliminación de fotos.
-
-Asociación de imágenes con ejercicios cognitivos.
-
-3. Game Service
-
-Responsabilidad: Ejecución y control de los ejercicios cognitivos.
-Entidades Principales:
-
-GameSession: Registro de partidas y resultados.
-Funcionalidades:
-
-Iniciar y finalizar sesiones de juego.
-
-Evaluar resultados de cada ejercicio.
-
-4. Report Service
-
-Responsabilidad: Generación de reportes cognitivos y monitoreo del progreso.
-Entidades Principales:
-
-Report: Registro de resultados, métricas e historial del paciente.
-Funcionalidades:
-
-Generar reportes automáticos.
-
-Mostrar tendencias de progreso.
-
-5. Notification Service
-
-Responsabilidad: Envío de recordatorios y alertas por correo electrónico.
-Entidades Principales:
-
-Notification: Mensaje, destinatario y estado.
-Funcionalidades:
-
-Recordatorios automáticos de práctica.
-
-Alertas de seguimiento médico.
-
-Beneficios de la Arquitectura
-
-Modularidad:
+### Modularidad
 Cada servicio tiene una función específica, lo que facilita la escalabilidad y mantenimiento.
 
-Escalabilidad:
+### Escalabilidad
 El sistema permite crecer horizontalmente según el número de usuarios y volumen de datos.
 
-Reutilización:
+### Reutilización
 Los módulos pueden adaptarse para otros sistemas de apoyo cognitivo o clínico.
 
-Seguridad y Privacidad:
+### Seguridad y Privacidad
 Cumplimiento con estándares de protección de datos médicos (HIPAA, GDPR).
-
