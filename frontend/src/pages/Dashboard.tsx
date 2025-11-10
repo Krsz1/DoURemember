@@ -62,7 +62,7 @@ export default function Dashboard() {
 
             {/* Juego 3 */}
             <div
-              onClick={() => navigate("/juego-logica")}
+              onClick={() => navigate("/juegos/logica")}
               className="cursor-pointer bg-white shadow-md hover:shadow-lg transition-all rounded-2xl p-6 flex flex-col items-center justify-center hover:bg-purple-50"
             >
               <Gamepad2 className="w-10 h-10 text-purple-500 mb-3" />
