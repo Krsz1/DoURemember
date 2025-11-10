@@ -7,6 +7,7 @@ import PrivateRoute from "./components/PrivateRoute";
 import DoctorDashboard from "./pages/DoctorDashboard";
 import JuegoMemoria from "./pages/JuegoMemoria";
 import JuegoPalabras from "./pages/JuegoPalabras";
+import JuegoDesafioLogica from "./pages/JuegoDesafioLogica";
 
 function App() {
   return (
@@ -54,6 +55,14 @@ function App() {
           element={
             <PrivateRoute>
               <JuegoPalabras /> {/* ✅ Nueva ruta de perfil */}
+            </PrivateRoute>
+          }
+        />
+      <Route
+          path="/juegos/logica"
+          element={
+            <PrivateRoute>
+              <JuegoDesafioLogica /> {/* ✅ Nueva ruta de perfil */}
             </PrivateRoute>
           }
         />
