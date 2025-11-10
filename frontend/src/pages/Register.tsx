@@ -1,40 +1,73 @@
 // src/pages/Register.tsx
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, User, Phone, IdCard } from "lucide-react";
 
+// Simulación de una base de datos temporal para validación
+const fakeDB = [
+  { correo: "doctor@example.com", documento: "123456789" },
+  { correo: "cuidador@example.com", documento: "987654321" },
+];
+
+// Simulación de envío de correo (mock)
+const sendVerificationEmail = async (correo: string): Promise<boolean> => {
+  return new Promise((resolve) => {
+    console.log(`📧 Enviando correo de verificación a ${correo}...`);
+    setTimeout(() => {
+      console.log("✅ Correo enviado correctamente (simulado)");
+      resolve(true);
+    }, 3000); // Simula envío en menos de 5 minutos
+  });
+};
+
 const Register = () => {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     rol: "",
-    // datos cuando el usuario es MEDICO
     nombre: "",
     documento: "",
-    // datos cuando el usuario es CUIDADOR (o paciente asociado)
     nombrePaciente: "",
     documentoPaciente: "",
-    // cuidador propios
     nombreCuidador: "",
     documentoCuidador: "",
-    // opcional
     medicoTratante: "",
-    // contacto / auth
     correo: "",
     telefono: "",
     password: "",
     confirmPassword: "",
   });
 
+  const [loading, setLoading] = useState(false);
+  const [correoVerificado, setCorreoVerificado] = useState(false);
+
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  // Función para validar seguridad de contraseña
+  const validatePassword = (password: string): boolean => {
+    const regex =
+      /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
+    return regex.test(password);
+  };
+
+  // Validar si el correo o documento ya existen
+  const isAlreadyRegistered = (correo: string, documento: string): boolean => {
+    return fakeDB.some(
+      (user) => user.correo === correo || user.documento === documento
+    );
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validaciones básicas
+    // Validaciones principales
     if (!formData.rol) {
       alert("Selecciona un rol.");
       return;
@@ -45,8 +78,15 @@ const Register = () => {
       return;
     }
 
-    if (!formData.password || !formData.confirmPassword) {
-      alert("Ingrese y confirme la contraseña.");
+    if (isAlreadyRegistered(formData.correo, formData.documento)) {
+      alert("El correo o documento ya están registrados.");
+      return;
+    }
+
+    if (!validatePassword(formData.password)) {
+      alert(
+        "La contraseña debe tener al menos 8 caracteres, una mayúscula, un número y un símbolo."
+      );
       return;
     }
 
@@ -55,10 +95,10 @@ const Register = () => {
       return;
     }
 
-    // Validaciones por rol
+    // Validaciones según el rol
     if (formData.rol === "medico") {
       if (!formData.nombre || !formData.documento) {
-        alert("Completa nombre y documento para el médico.");
+        alert("Completa nombre y documento del médico.");
         return;
       }
     }
@@ -74,52 +114,23 @@ const Register = () => {
       }
     }
 
-    // Preparar payload consistente
-    const base = {
-      rol: formData.rol,
-      correo: formData.correo,
-      telefono: formData.telefono || null,
-    };
+    // Envío del correo de verificación
+    setLoading(true);
+    const enviado = await sendVerificationEmail(formData.correo);
+    setLoading(false);
 
-    let dataToSend: any = { ...base };
+    if (enviado) {
+      alert("Correo de verificación enviado. Por favor, revisa tu bandeja.");
+      setCorreoVerificado(true);
 
-    if (formData.rol === "medico") {
-      dataToSend = {
-        ...dataToSend,
-        tipo: "medico",
-        nombre: formData.nombre,
-        documento: formData.documento,
-        medicoTratante: null,
-        nombreCuidador: null,
-        documentoCuidador: null,
-      };
-    } else if (formData.rol === "cuidador") {
-      dataToSend = {
-        ...dataToSend,
-        tipo: "cuidador",
-        nombrePaciente: formData.nombrePaciente,
-        documentoPaciente: formData.documentoPaciente,
-        nombreCuidador: formData.nombreCuidador || null,
-        documentoCuidador: formData.documentoCuidador || null,
-        medicoTratante: formData.medicoTratante || null,
-      };
-    } else {
-      // por si hay más roles en el futuro
-      dataToSend = {
-        ...dataToSend,
-        tipo: formData.rol,
-        medicoTratante: formData.medicoTratante || null,
-        nombreCuidador: formData.nombreCuidador || null,
-        documentoCuidador: formData.documentoCuidador || null,
-      };
+      // Simula que el usuario confirmó el correo
+      setTimeout(() => {
+        alert("Correo verificado con éxito 🎉");
+        // Registro exitoso
+        console.log("Usuario registrado:", formData);
+        navigate("/dashboard"); // o a la pantalla principal
+      }, 4000);
     }
-
-    // Nota: aquí podrías llamar a tu servicio de auth / API / Firebase para crear el usuario.
-    // Por ahora dejamos en consola para pruebas locales.
-    console.log("Datos de registro preparados:", dataToSend);
-
-    // Ejemplo: limpiar form (opcional)
-    // setFormData({ rol: "", nombre: "", documento: "", nombrePaciente: "", documentoPaciente: "", nombreCuidador: "", documentoCuidador: "", medicoTratante: "", correo: "", telefono: "", password: "", confirmPassword: "" });
   };
 
   return (
@@ -135,7 +146,6 @@ const Register = () => {
           </p>
         </div>
 
-        {/* Formulario */}
         <form onSubmit={handleRegister} className="space-y-5">
           {/* Rol */}
           <div className="relative">
@@ -152,10 +162,9 @@ const Register = () => {
             </select>
           </div>
 
-          {/* Campos dinámicos para MEDICO */}
+          {/* Campos dinámicos */}
           {formData.rol === "medico" && (
             <>
-              {/* Nombre */}
               <div className="relative">
                 <User className="absolute left-4 top-3.5 text-gray-400" size={18} />
                 <input
@@ -168,8 +177,6 @@ const Register = () => {
                   className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none text-gray-700 transition-all duration-300"
                 />
               </div>
-
-              {/* Documento */}
               <div className="relative">
                 <IdCard className="absolute left-4 top-3.5 text-gray-400" size={18} />
                 <input
@@ -185,10 +192,8 @@ const Register = () => {
             </>
           )}
 
-          {/* Campos dinámicos para CUIDADOR */}
           {formData.rol === "cuidador" && (
             <>
-              {/* Nombre del paciente */}
               <div className="relative">
                 <User className="absolute left-4 top-3.5 text-gray-400" size={18} />
                 <input
@@ -201,8 +206,6 @@ const Register = () => {
                   className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none text-gray-700 transition-all duration-300"
                 />
               </div>
-
-              {/* Documento del paciente */}
               <div className="relative">
                 <IdCard className="absolute left-4 top-3.5 text-gray-400" size={18} />
                 <input
@@ -215,21 +218,6 @@ const Register = () => {
                   className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none text-gray-700 transition-all duration-300"
                 />
               </div>
-
-              {/* Médico tratante (opcional) */}
-              <div className="relative">
-                <User className="absolute left-4 top-3.5 text-gray-400" size={18} />
-                <input
-                  type="text"
-                  name="medicoTratante"
-                  placeholder="Nombre del médico tratante (opcional)"
-                  value={formData.medicoTratante}
-                  onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none text-gray-700 transition-all duration-300"
-                />
-              </div>
-
-              {/* Nombre del cuidador */}
               <div className="relative">
                 <User className="absolute left-4 top-3.5 text-gray-400" size={18} />
                 <input
@@ -242,8 +230,6 @@ const Register = () => {
                   className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none text-gray-700 transition-all duration-300"
                 />
               </div>
-
-              {/* Documento del cuidador */}
               <div className="relative">
                 <IdCard className="absolute left-4 top-3.5 text-gray-400" size={18} />
                 <input
@@ -259,7 +245,7 @@ const Register = () => {
             </>
           )}
 
-          {/* Correo */}
+          {/* Correo, Teléfono y Contraseña */}
           <div className="relative">
             <Mail className="absolute left-4 top-3.5 text-gray-400" size={18} />
             <input
@@ -269,11 +255,10 @@ const Register = () => {
               value={formData.correo}
               onChange={handleChange}
               required
-              className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none text-gray-700 transition-all duration-300"
+              className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200"
             />
           </div>
 
-          {/* Teléfono */}
           <div className="relative">
             <Phone className="absolute left-4 top-3.5 text-gray-400" size={18} />
             <input
@@ -283,11 +268,10 @@ const Register = () => {
               value={formData.telefono}
               onChange={handleChange}
               required
-              className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none text-gray-700 transition-all duration-300"
+              className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200"
             />
           </div>
 
-          {/* Contraseña */}
           <div className="relative">
             <Lock className="absolute left-4 top-3.5 text-gray-400" size={18} />
             <input
@@ -297,11 +281,10 @@ const Register = () => {
               value={formData.password}
               onChange={handleChange}
               required
-              className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none text-gray-700 transition-all duration-300"
+              className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200"
             />
           </div>
 
-          {/* Confirmar contraseña */}
           <div className="relative">
             <Lock className="absolute left-4 top-3.5 text-gray-400" size={18} />
             <input
@@ -311,20 +294,23 @@ const Register = () => {
               value={formData.confirmPassword}
               onChange={handleChange}
               required
-              className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none text-gray-700 transition-all duration-300"
+              className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200"
             />
           </div>
 
-          {/* Botón */}
           <button
             type="submit"
-            className="w-full py-3 mt-2 rounded-xl font-semibold text-white text-lg bg-gradient-to-r from-orange-400 via-pink-500 to-red-400 hover:shadow-[0_6px_20px_rgb(251,146,60,0.5)] transform hover:-translate-y-0.5 transition-all duration-300"
+            disabled={loading}
+            className={`w-full py-3 mt-2 rounded-xl font-semibold text-white text-lg ${
+              loading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-gradient-to-r from-orange-400 via-pink-500 to-red-400 hover:shadow-lg"
+            } transition-all duration-300`}
           >
-            Crear cuenta
+            {loading ? "Enviando correo..." : "Crear cuenta"}
           </button>
         </form>
 
-        {/* Enlace de login */}
         <p className="text-center text-gray-600 mt-8 text-sm">
           ¿Ya tienes cuenta?{" "}
           <Link
