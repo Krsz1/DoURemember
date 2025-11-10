@@ -209,8 +209,7 @@ export default function JuegoMemoria() {
           <div>
             <h1 className="text-3xl font-bold text-gray-800">🧩 Juego de Memoria</h1>
             <p className="text-gray-600 mt-1">
-              Sube tus propias imágenes, asígnales etiquetas y juega o realiza una
-              evaluación cognitiva.
+              Sube tus propias imágenes, asígnales etiquetas y juega o realiza una evaluación cognitiva.
             </p>
           </div>
 
@@ -238,7 +237,7 @@ export default function JuegoMemoria() {
             />
 
             {images.length > 0 && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-6">
                 {images.map((img, i) => (
                   <div
                     key={i}
@@ -261,20 +260,21 @@ export default function JuegoMemoria() {
               </div>
             )}
 
-            <button
-              onClick={startGame}
-              className="bg-blue-600 text-white px-6 py-2 rounded-xl hover:bg-blue-700 transition mr-3"
-            >
-              Iniciar juego clásico
-            </button>
-
-            {/* Botón ajustado — solo prepara modo cognitivo */}
-            <button
-              onClick={startCognitiveMode}
-              className="bg-purple-600 text-white px-6 py-2 rounded-xl hover:bg-purple-700 transition"
-            >
-              Preparar evaluación cognitiva
-            </button>
+            {/* BOTONES ABAJO */}
+            <div className="flex flex-wrap gap-3 mt-6 justify-center">
+              <button
+                onClick={startGame}
+                className="bg-blue-600 text-white px-6 py-2 rounded-xl hover:bg-blue-700 transition"
+              >
+                Iniciar juego clásico
+              </button>
+              <button
+                onClick={startCognitiveMode}
+                className="bg-purple-600 text-white px-6 py-2 rounded-xl hover:bg-purple-700 transition"
+              >
+                Preparar evaluación cognitiva
+              </button>
+            </div>
           </div>
         )}
 
@@ -288,21 +288,17 @@ export default function JuegoMemoria() {
                 <span className="font-semibold">{matched.length / 2}</span>
               </div>
 
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={resetGame}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition"
-                >
-                  Nueva configuración
-                </button>
-              </div>
+              <button
+                onClick={resetGame}
+                className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition"
+              >
+                Nueva configuración
+              </button>
             </div>
 
             <div
               className="grid gap-4"
-              style={{
-                gridTemplateColumns: "repeat(auto-fit, minmax(90px, 1fr))",
-              }}
+              style={{ gridTemplateColumns: "repeat(auto-fit, minmax(90px, 1fr))" }}
             >
               {cards.map((card, idx) => {
                 const isFlipped = flipped.includes(idx) || matched.includes(idx);
