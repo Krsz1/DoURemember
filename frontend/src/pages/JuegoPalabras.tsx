@@ -2,16 +2,42 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 
+// Tipos base
 interface Pair {
   id: number;
   image: string;
   label: string;
 }
 
+interface ResultadoCognitivo {
+  juego: string;
+  fecha: string;
+  memoria: number;
+  coherencia: number;
+  omision: number;
+  comision: number;
+  puntaje: number;
+}
+
+// 📊 Función auxiliar para calcular métricas cognitivas
+const calcularMetricas = (aciertos: number, errores: number, total: number) => {
+  const memoria = aciertos / total;
+  const omision = (total - aciertos) / total;
+  const comision = errores / total;
+  const coherencia = 1 - (comision + omision) / 2;
+  return { memoria, coherencia, omision, comision };
+};
+
+// 📋 Guardar resultados locales
+const guardarResultado = (resultado: ResultadoCognitivo) => {
+  const prev = JSON.parse(localStorage.getItem("resultados_cognitivos") || "[]");
+  localStorage.setItem("resultados_cognitivos", JSON.stringify([...prev, resultado]));
+};
+
 export default function JuegoEmparejar() {
   const navigate = useNavigate();
 
-  // ✅ Imágenes actualizadas y únicas
+  // ✅ Pares de imagen y etiqueta
   const initialPairs: Pair[] = [
     {
       id: 1,
@@ -55,6 +81,7 @@ export default function JuegoEmparejar() {
   const [selected, setSelected] = useState<{ type: "image" | "label"; id: number } | null>(null);
   const [matched, setMatched] = useState<number[]>([]);
   const [score, setScore] = useState(0);
+  const [errors, setErrors] = useState(0);
   const [difficulty, setDifficulty] = useState<"facil" | "dificil">("facil");
   const [showMessage, setShowMessage] = useState("");
 
@@ -62,6 +89,7 @@ export default function JuegoEmparejar() {
     setPairs([...initialPairs].sort(() => Math.random() - 0.5));
   }, []);
 
+  // 🎯 Selección de imágenes y etiquetas
   const handleSelect = (type: "image" | "label", id: number) => {
     if (matched.includes(id)) return;
 
@@ -75,6 +103,7 @@ export default function JuegoEmparejar() {
           setShowMessage("✅ ¡Correcto!");
           setTimeout(() => setShowMessage(""), 1000);
         } else {
+          setErrors((e) => e + 1);
           setShowMessage("❌ Intenta otra vez");
           setTimeout(() => setShowMessage(""), difficulty === "facil" ? 1500 : 800);
         }
@@ -83,15 +112,37 @@ export default function JuegoEmparejar() {
     }
   };
 
+  // 🔄 Reiniciar juego
   const resetGame = () => {
     setMatched([]);
     setScore(0);
+    setErrors(0);
     setSelected(null);
     setShowMessage("");
     setPairs([...initialPairs].sort(() => Math.random() - 0.5));
   };
 
   const allMatched = matched.length === initialPairs.length;
+
+  // 🧠 Cuando el jugador termina el juego
+  useEffect(() => {
+    if (allMatched) {
+      const total = initialPairs.length;
+      const { memoria, coherencia, omision, comision } = calcularMetricas(score, errors, total);
+
+      const resultado: ResultadoCognitivo = {
+        juego: "Emparejar Palabras",
+        fecha: new Date().toISOString(),
+        memoria,
+        coherencia,
+        omision,
+        comision,
+        puntaje: score,
+      };
+
+      guardarResultado(resultado);
+    }
+  }, [allMatched]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -150,9 +201,7 @@ export default function JuegoEmparejar() {
                   key={pair.id}
                   onClick={() => handleSelect("image", pair.id)}
                   draggable={!matched.includes(pair.id)}
-                  onDragStart={(e) =>
-                    e.dataTransfer.setData("pair-id", String(pair.id))
-                  }
+                  onDragStart={(e) => e.dataTransfer.setData("pair-id", String(pair.id))}
                   className={`cursor-pointer rounded-xl overflow-hidden shadow-md border-4 transition-all duration-200 ${
                     selected?.type === "image" && selected.id === pair.id
                       ? "border-blue-400"
@@ -223,6 +272,9 @@ export default function JuegoEmparejar() {
             </h2>
             <p className="text-gray-700 mb-4">
               Puntaje final: <span className="font-bold">{score}</span>
+            </p>
+            <p className="text-gray-600 mb-2">
+              Resultados cognitivos guardados en el sistema.
             </p>
             <button
               onClick={resetGame}
