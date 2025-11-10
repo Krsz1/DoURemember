@@ -1,21 +1,19 @@
-require('dotenv').config({ path: '../.env' });
+const path = require("path");
+require("dotenv").config({ path: path.resolve(__dirname, "../../.env") });
 const express = require("express");
-const mongoose = require("mongoose");
+const { connectMongo } = require("./utils/bd");
 const reportRoutes = require("./routes/report-routes");
-require("dotenv").config();
 
 const app = express();
 
-// Para JSON grandes (si usaras Base64)
+// Conectar a MongoDB
+connectMongo();
+
+// Para JSON grandes (por ejemplo Base64)
 app.use(express.json({ limit: "50mb" }));
 
 // Rutas
 app.use("/reports", reportRoutes);
 
-// Conexión a MongoDB
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("Conectado a MongoDB"))
-  .catch(err => console.error("Error conectando a MongoDB:", err));
-
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log(`Report service corriendo en puerto ${PORT}`));
+const PORT = process.env.REPORT_SERVICE_PORT || 4004;
+app.listen(PORT, () => console.log(`🚀 Report-Service corriendo en puerto ${PORT}`));

@@ -1,15 +1,21 @@
-const { admin } = require('../utils/firebaseAdmin');
+const admin = require("../utils/firebaseAdmin");
 
-exports.verifyToken = async (req, res, next) => {
-  try {
-    const authHeader = req.headers.authorization || '';
-    const token = authHeader.split('Bearer ')[1];
-    if (!token) return res.status(401).json({ error: 'No token' });
-
-    const decoded = await admin.auth().verifyIdToken(token);
-    req.user = decoded;
-    next();
-  } catch (err) {
-    res.status(401).json({ error: 'Invalid token' });
+async function verifyFirebaseToken(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "Token no proporcionado" });
   }
-};
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    req.user = decodedToken;
+    next();
+  } catch (error) {
+    console.error("❌ Error verificando token Firebase:", error);
+    res.status(401).json({ error: "Token inválido o expirado" });
+  }
+}
+
+module.exports = verifyFirebaseToken;

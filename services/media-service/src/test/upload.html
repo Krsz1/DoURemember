@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Subir Foto (Pruebas)</title>
+</head>
+<body>
+  <h1>Subir Foto de Prueba</h1>
+  <form id="uploadForm" enctype="multipart/form-data">
+    <label>Descripción:</label><br>
+    <input type="text" id="description"><br><br>
+    <label>Foto:</label><br>
+    <input type="file" id="photo" accept="image/*"><br><br>
+    <button type="submit">Subir</button>
+  </form>
+
+  <script>
+    const form = document.getElementById("uploadForm");
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData();
+      formData.append("photo", document.getElementById("photo").files[0]);
+      formData.append("description", document.getElementById("description").value);
+
+      const response = await fetch("http://localhost:4002/api/test/upload", {
+        method: "POST",
+        body: formData,
+        headers: {
+          "x-test-uid": "testuser1" // UID de prueba
+        }
+      });
+
+      const data = await response.json();
+      alert(JSON.stringify(data));
+    });
+  </script>
+</body>
+</html>

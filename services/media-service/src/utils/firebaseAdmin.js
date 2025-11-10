@@ -1,25 +1,16 @@
-const admin = require('firebase-admin');
-const path = require('path');
-const dotenv = require('dotenv');
+const admin = require("firebase-admin");
+const path = require("path");
+const dotenv = require("dotenv");
 
-// ----------------- Cargar archivo .env -----------------
-const envPath = path.resolve(__dirname, '../../../.env'); 
-console.log('🧭 Cargando .env desde:', envPath);
-dotenv.config({ path: envPath }); // Cargar variables de entorno
+dotenv.config();
 
-// ----------------- Inicializar Firebase Admin -----------------
-if (!admin.apps.length) { // Evitar reinicialización si ya existe una app
-  console.log('📦 Bucket leído del .env:', process.env.FIREBASE_STORAGE_BUCKET);
+const serviceAccount = path.resolve(__dirname, "../../../../firebase.json");
 
+if (!admin.apps.length) {
   admin.initializeApp({
-    credential: admin.credential.applicationDefault(), // Credenciales por defecto de Firebase
-    storageBucket: process.env.FIREBASE_STORAGE_BUCKET || 'doyouremember-bb895.appspot.com', // Configurar bucket de Storage
+    credential: admin.credential.cert(serviceAccount),
   });
+  console.log("🔥 Firebase Admin inicializado");
 }
 
-// ----------------- Inicializar Firestore y Storage -----------------
-const db = admin.firestore();
-const bucket = admin.storage().bucket();
-
-// ----------------- Exportar instancias para usar en otros módulos -----------------
-module.exports = { admin, db, bucket };
+module.exports = admin;

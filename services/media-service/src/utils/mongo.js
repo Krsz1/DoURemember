@@ -7,7 +7,7 @@ const connectMongo = async () => {
     }
 
     await mongoose.connect(process.env.MONGO_URI);
-    console.log("✅ Conectado a MongoDB (Report-Service)");
+    console.log("✅ Conectado a MongoDB (Media-Service)");
   } catch (error) {
     console.error("❌ Error conectando a MongoDB:", error.message);
     process.exit(1);
