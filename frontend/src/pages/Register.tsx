@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, User, Phone, IdCard } from "lucide-react";
 import { registerUser } from "../api/authservice";
 
 const Register = () => {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     rol: "",
     nombre: "",
@@ -18,7 +20,9 @@ const Register = () => {
   });
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -72,6 +76,7 @@ const Register = () => {
       const result = await registerUser(dataToSend);
       console.log("Usuario registrado:", result);
       alert("Usuario registrado con éxito. Ya puedes iniciar sesión.");
+      navigate("/");
     } catch (error: any) {
       console.error("Error registrando usuario:", error.response?.data || error.message);
       alert("Error al registrar usuario: " + (error.response?.data?.message || error.message));
@@ -110,36 +115,35 @@ const Register = () => {
           {/* Paso 2: campos según rol */}
           {formData.rol !== "" && (
             <>
-              {/* Campos comunes */}
-              {(formData.rol === "medico" || formData.rol === "paciente" || formData.rol === "cuidador") && (
-                <>
-                  <div className="relative">
-                    <User className="absolute left-4 top-3.5 text-gray-400" size={18} />
-                    <input
-                      type="text"
-                      name="nombre"
-                      placeholder="Nombre completo"
-                      value={formData.nombre}
-                      onChange={handleChange}
-                      required
-                      className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none text-gray-700 transition-all duration-300"
-                    />
-                  </div>
+              {/* Nombre */}
+              <div className="relative">
+                <User className="absolute left-4 top-3.5 text-gray-400" size={18} />
+                <input
+                  type="text"
+                  name="nombre"
+                  placeholder="Nombre completo"
+                  value={formData.nombre}
+                  onChange={handleChange}
+                  required
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none text-gray-700 transition-all duration-300"
+                />
+              </div>
 
-                  <div className="relative">
-                    <IdCard className="absolute left-4 top-3.5 text-gray-400" size={18} />
-                    <input
-                      type="text"
-                      name="documento"
-                      placeholder="Documento de identidad"
-                      value={formData.documento}
-                      onChange={handleChange}
-                      required
-                      className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none text-gray-700 transition-all duration-300"
-                    />
-                  </div>
-                </>
-              )}
+              {/* Documento */}
+              <div className="relative">
+                <IdCard className="absolute left-4 top-3.5 text-gray-400" size={18} />
+                <input
+                  type="text"
+                  name="documento"
+                  placeholder="Documento de identidad"
+                  value={formData.documento}
+                  onChange={handleChange}
+                  required
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none text-gray-700 transition-all duration-300"
+                />
+              </div>
+            </>
+          )}
 
               {formData.rol === "paciente" && (
                 <div className="relative">
@@ -213,18 +217,19 @@ const Register = () => {
                 />
               </div>
 
-              <div className="relative">
-                <Lock className="absolute left-4 top-3.5 text-gray-400" size={18} />
-                <input
-                  type="password"
-                  name="password"
-                  placeholder="Contraseña"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none text-gray-700 transition-all duration-300"
-                />
-              </div>
+          {/* Contraseña */}
+          <div className="relative">
+            <Lock className="absolute left-4 top-3.5 text-gray-400" size={18} />
+            <input
+              type="password"
+              name="password"
+              placeholder="Contraseña"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none text-gray-700 transition-all duration-300"
+            />
+          </div>
 
               <div className="relative">
                 <Lock className="absolute left-4 top-3.5 text-gray-400" size={18} />
@@ -245,8 +250,6 @@ const Register = () => {
               >
                 Crear cuenta
               </button>
-            </>
-          )}
         </form>
 
         <p className="text-center text-gray-600 mt-8 text-sm">

@@ -105,24 +105,7 @@ export default function DoctorDashboard() {
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => handleQuickAction("Nueva cita")}
-                className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg flex items-center gap-2"
-                aria-label="Crear nueva cita"
-              >
-                <Plus className="w-4 h-4" /> Nueva cita
-              </button>
-
-              <button
-                onClick={() => handleQuickAction("Enviar recordatorio")}
-                className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg flex items-center gap-2"
-                aria-label="Enviar recordatorio"
-              >
-                <Bell className="w-4 h-4" /> Recordatorio
-              </button>
             </div>
-          </div>
         </section>
 
         {/* Resumen del día — cards anchas y con más detalle */}
@@ -299,35 +282,6 @@ export default function DoctorDashboard() {
                   </li>
                 ))}
               </ul>
-            </div>
-
-            <div className="bg-white rounded-2xl shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                Acciones rápidas
-              </h3>
-
-              <div className="mt-4 grid grid-cols-1 gap-3">
-                <button
-                  onClick={() => handleQuickAction("Crear nota")}
-                  className="w-full text-left bg-blue-50 hover:bg-blue-100 text-blue-600 px-4 py-3 rounded-lg flex items-center gap-3"
-                >
-                  <FileText className="w-5 h-5" /> Nueva nota médica
-                </button>
-
-                <button
-                  onClick={() => handleQuickAction("Enviar mensaje")}
-                  className="w-full text-left bg-green-50 hover:bg-green-100 text-green-600 px-4 py-3 rounded-lg flex items-center gap-3"
-                >
-                  <Mail className="w-5 h-5" /> Enviar mensaje a paciente
-                </button>
-
-                <button
-                  onClick={() => handleQuickAction("Marcar revisado")}
-                  className="w-full text-left bg-slate-50 hover:bg-slate-100 text-slate-700 px-4 py-3 rounded-lg flex items-center gap-3"
-                >
-                  <CheckCircle className="w-5 h-5" /> Marcar resultado como revisado
-                </button>
-              </div>
             </div>
           </aside>
         </section>

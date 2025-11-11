@@ -7,6 +7,9 @@ import PrivateRoute from "./components/PrivateRoute";
 import DoctorDashboard from "./pages/DoctorDashboard";
 import JuegoMemoria from "./pages/JuegoMemoria";
 import JuegoPalabras from "./pages/JuegoPalabras";
+import JuegoDesafioLogica from "./pages/JuegoDesafioLogica";
+import Recuerdos from "./pages/Recuerdos"; 
+import Recordatorios from "./pages/Recordatorios";
 
 function App() {
   return (
@@ -54,6 +57,30 @@ function App() {
           element={
             <PrivateRoute>
               <JuegoPalabras /> {/* ✅ Nueva ruta de perfil */}
+            </PrivateRoute>
+          }
+        />
+      <Route
+          path="/juegos/logica"
+          element={
+            <PrivateRoute>
+              <JuegoDesafioLogica /> {/* ✅ Nueva ruta de perfil */}
+            </PrivateRoute>
+          }
+        />
+      <Route
+          path="/recuerdos"
+          element={
+            <PrivateRoute>
+              <Recuerdos /> {/* ✅ Nueva ruta de perfil */}
+            </PrivateRoute>
+          }
+        />
+      <Route
+          path="/recordatorios"
+          element={
+            <PrivateRoute>
+              <Recordatorios /> {/* ✅ Nueva ruta de perfil */}
             </PrivateRoute>
           }
         />
