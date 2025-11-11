@@ -12,8 +12,8 @@ export interface RegisterData {
   rol: string;
   password: string;
   medicoTratante?: string;
-  nombreCuidador?: string;
-  documentoCuidador?: string;
+  nombrePaciente?: string;
+  documentoPaciente?: string;
 }
 
 export interface LoginData {
@@ -33,24 +33,34 @@ export interface DeleteUserData {
 
 // Registrar usuario
 export const registerUser = async (data: RegisterData) => {
-  const res = await authApi.post("/register", data);
+  const res = await authApi.post("/auth/register", data);
   return res.data;
 };
 
 // Iniciar sesión
 export const loginUser = async (data: LoginData) => {
-  const res = await authApi.post("/login", data);
+  const res = await authApi.post("/auth/login", data);
   return res.data;
 };
 
 // Cambiar contraseña
 export const changePassword = async (data: ChangePasswordData) => {
-  const res = await authApi.put("/password", data);
+  const res = await authApi.put("/auth/password", data);
   return res.data;
 };
 
 // Eliminar usuario
 export const deleteUser = async (data: DeleteUserData) => {
-  const res = await authApi.delete("/delete", { data });
+  const res = await authApi.delete("/auth/delete", { data });
   return res.data;
+};
+
+// Logout
+export const logoutUser = async (uid: string) => {
+  try {
+    const res = await authApi.post("/auth/logout", { uid });
+    return res.data;
+  } catch (error) {
+    console.error(error);
+  }
 };

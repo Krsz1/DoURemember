@@ -1,6 +1,6 @@
-// src/pages/Dashboard.tsx
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
+import { logoutUser } from "../api/authservice";
 import {
   Clock,
   BookOpen,
@@ -11,12 +11,21 @@ import {
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const uid = localStorage.getItem("uid");
+
+  // Función para cerrar sesión
+  const handleLogout = async () => {
+    if (!uid) return;
+    await logoutUser(uid);
+    localStorage.removeItem("uid");
+    navigate("/");
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* 🌿 Header con barra de búsqueda y usuarios */}
       <div className="bg-white shadow-sm sticky top-0 z-10">
-        <Header />
+        <Header logout={handleLogout} />
       </div>
 
       {/* 🌸 Contenido principal */}

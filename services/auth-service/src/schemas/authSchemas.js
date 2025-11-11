@@ -1,11 +1,11 @@
 const Joi = require("joi");
 
 const registerSchema = Joi.object({
+  rol: Joi.string().valid("paciente", "cuidador", "medico").required(),
   nombre: Joi.string().required(),
   documento: Joi.string().required(),
   correo: Joi.string().email().required(),
   telefono: Joi.string().required(),
-  rol: Joi.string().valid("paciente", "cuidador", "medico").required(),
   password: Joi.string()
     .min(8)
     .pattern(/[A-Z]/)
@@ -13,8 +13,8 @@ const registerSchema = Joi.object({
     .pattern(/[^a-zA-Z0-9]/)
     .required(),
   medicoTratante: Joi.string().allow(null, ""),
-  nombreCuidador: Joi.string().allow(null, ""),
-  documentoCuidador: Joi.string().allow(null, ""),
+  nombrePaciente: Joi.string().allow(null, ""),
+  documentoPaciente: Joi.string().allow(null, ""),
 });
 
 const loginSchema = Joi.object({

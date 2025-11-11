@@ -11,8 +11,14 @@ const Login = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!email || !password) {
-      alert("Ingresa correo y contraseña");
+    // Validaciones básicas
+    if (!email) {
+      alert("Ingresa correo");
+      return;
+    }
+
+    if (!password) {
+      alert("Ingresa contraseña");
       return;
     }
 

@@ -1,6 +1,7 @@
 // src/api/notificationservice.ts
 import { createAxiosInstance } from "./axios";
 
+// Instancia de Axios apuntando al notification-service
 const notificationApi = createAxiosInstance(import.meta.env.VITE_NOTIFICATION_API_URL);
 
 // Datos para crear una notificación
@@ -11,13 +12,13 @@ export interface NotificationData {
 
 // Crear una notificación real en el backend
 export const createNotification = async (data: NotificationData) => {
-  const res = await notificationApi.post("/api/notifications/create", data);
+  const res = await notificationApi.post("/notifications/create", data);
   return res.data;
 };
 
 // Enviar una notificación de prueba (para verificar el correo)
 export const sendTestNotification = async (uidPaciente: string) => {
-  const res = await notificationApi.post("/api/notifications/send-test", { uidPaciente });
+  const res = await notificationApi.post("/notifications/send-test", { uidPaciente });
   return res.data;
 };
 
@@ -29,6 +30,6 @@ export interface ScheduleData {
 }
 
 export const saveSchedule = async (data: ScheduleData) => {
-  const res = await notificationApi.post("/api/notifications/schedule", data);
+  const res = await notificationApi.post("/notifications/schedule", data);
   return res.data;
 };

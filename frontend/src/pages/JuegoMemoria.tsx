@@ -1,7 +1,7 @@
-// src/pages/JuegoMemoria.tsx
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
+import { logoutUser } from "../api/authservice";
 
 const ICONS = ["🐶", "🐱", "🐭", "🐹", "🐰", "🦊", "🐻", "🐼"];
 
@@ -13,10 +13,20 @@ export default function JuegoMemoria() {
   const [matched, setMatched] = useState<number[]>([]);
   const [moves, setMoves] = useState(0);
   const [busy, setBusy] = useState(false);
+  const uid = localStorage.getItem("uid");
+
 
   useEffect(() => {
     resetGame();
   }, []);
+
+  // Función para cerrar sesión
+  const handleLogout = async () => {
+    if (!uid) return;
+    await logoutUser(uid);
+    localStorage.removeItem("uid");
+    navigate("/");
+  };
 
   const shuffle = (arr: string[]) => {
     const a = arr.slice();
@@ -67,7 +77,7 @@ export default function JuegoMemoria() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Header />
+      <Header logout={handleLogout}/>
 
       <main className="flex-1 max-w-5xl mx-auto px-6 py-10">
         {/* Encabezado */}

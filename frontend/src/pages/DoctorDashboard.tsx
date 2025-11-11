@@ -2,6 +2,8 @@
 import React, { useState } from "react";
 import Header from "../components/Header";
 import { useNavigate } from "react-router-dom";
+import { logoutUser } from "../api/authservice";
+
 import {
   Calendar,
   Users,
@@ -43,6 +45,14 @@ type LabResult = {
 
 export default function DoctorDashboard() {
   const navigate = useNavigate();
+  const uid = localStorage.getItem("uid");
+
+  const handleLogout = async () => {
+    if (!uid) return;
+    await logoutUser(uid);
+    localStorage.removeItem("uid");
+    navigate("/");
+  };
 
   // Datos simulados
   const [appointments] = useState<Appointment[]>([
@@ -81,7 +91,7 @@ export default function DoctorDashboard() {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
       <div className="bg-white shadow-sm sticky top-0 z-20">
-        <Header />
+        <Header logout={handleLogout}/>
       </div>
 
       <main className="flex-1 max-w-6xl mx-auto px-6 py-10 space-y-12">

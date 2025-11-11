@@ -41,23 +41,23 @@ router.post("/upload", async (req, res) => {
 });
 // ---------------------------------------------------------------------------------------------
 
-// --------------- GET /reports/:id (obtener un reporte con su id) -----------------------------
+// --------------- GET /reports/getReport/:id (obtener un reporte con su id) -----------------------------
 
-router.get("/:id", async (req, res) => {
+router.get("/getReport/:id", async (req, res) => {
   try {
     const reporte = await Reporte.findById(req.params.id);
     if (!reporte) return res.status(404).json({ message: "Reporte no encontrado" });
 
     res.json(reporte);
   } catch (error) {
-    console.error("ERROR GET /:id:", error);
+    console.error("ERROR GET /Report/:id:", error);
     res.status(500).json({ message: "Error al obtener el reporte", error: error.message });
   }
 });
 // -----------------------------------------------------------------------------------------------
 
-// ------- GET /reports/user/:uid (obtener todos los reportes de un usuario con su id) -----------
-router.get("/user/:uid", async (req, res) => {
+// ------- GET /reports/getUserReports/:uid (obtener todos los reportes de un usuario con su id) -----------
+router.get("/getUserReports/:uid", async (req, res) => {
   try {
     const { uid } = req.params;
 
@@ -76,14 +76,14 @@ router.get("/user/:uid", async (req, res) => {
       reportes
     });
   } catch (error) {
-    console.error("ERROR GET /user/:uid:", error);
+    console.error("ERROR GET /getUserReports/:uid:", error);
     res.status(500).json({ message: "Error al obtener los reportes", error: error.message });
   }
 });
 // ---------------------------------------------------------------------------------------------
 
-// ---------------- PUT /reports/:id (modificar reporte existente, con su id) ------------------
-router.put("/:id", async (req, res) => {
+// ---------------- PUT /reports/modifyReport/:id (modificar reporte existente, con su id) ------------------
+router.put("/modifyReport/:id", async (req, res) => {
   try {
     const { nombre, descripcion, usuarioId, pdfBase64 } = req.body;
 
@@ -98,28 +98,28 @@ router.put("/:id", async (req, res) => {
 
     res.json({ message: "Reporte actualizado", reporte });
   } catch (error) {
-    console.error("ERROR PUT /:id:", error);
+    console.error("ERROR PUT /modifyReport/:id:", error);
     res.status(500).json({ message: "Error al actualizar el reporte", error: error.message });
   }
 });
 // ----------------------------------------------------------------------------------------------
 
-// --------------------- DELETE /reports/:id (eliminar reporte con su id) -----------------------
-router.delete("/:id", async (req, res) => {
+// --------------------- DELETE /reports/deleteReport/:id (eliminar reporte con su id) -----------------------
+router.delete("/deleteReport/:id", async (req, res) => {
   try {
     const reporte = await Reporte.findByIdAndDelete(req.params.id);
     if (!reporte) return res.status(404).json({ message: "Reporte no encontrado" });
 
     res.json({ message: "Reporte eliminado correctamente" });
   } catch (error) {
-    console.error("ERROR DELETE /:id:", error);
+    console.error("ERROR DELETE /deleteReport/:id:", error);
     res.status(500).json({ message: "Error al eliminar el reporte", error: error.message });
   }
 });
 // -----------------------------------------------------------------------------------------------
 
-// --------- GET /reports/:id/pdf (obtener PDF de un reporte, con id del reporte) ----------------
-router.get("/:id/pdf", async (req, res) => {
+// --------- GET /reports/getReport/:id/pdf (obtener PDF de un reporte, con id del reporte) ----------------
+router.get("/getReport/:id/pdf", async (req, res) => {
   try {
     const reporte = await Reporte.findById(req.params.id);
     if (!reporte) return res.status(404).json({ message: "Reporte no encontrado" });
@@ -130,7 +130,7 @@ router.get("/:id/pdf", async (req, res) => {
     });
     res.send(reporte.pdf);
   } catch (error) {
-    console.error("ERROR GET /:id/pdf:", error);
+    console.error("ERROR GET /getReport/:id/pdf:", error);
     res.status(500).json({ message: "Error al obtener el PDF", error: error.message });
   }
 });

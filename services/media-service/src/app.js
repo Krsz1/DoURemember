@@ -1,5 +1,5 @@
 const express = require("express");
-const cors = require("cors"); // <- Importar CORS
+const cors = require("cors");
 const path = require("path");
 require("dotenv").config({ path: path.resolve(__dirname, "../../.env") });
 const { connectMongo } = require("./utils/mongo");
@@ -14,11 +14,10 @@ connectMongo();
 // Middlewares
 app.use(express.json({ limit: "50mb" }));
 
-// Configurar CORS
+// Configurar CORS para frontend moderno
 app.use(cors({
-  origin: "http://127.0.0.1:5500", // <- el origen desde donde servirás el HTML
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "x-test-uid"]
+  origin: "http://localhost:5173", // URL del frontend
+  credentials: true,               // Permite enviar cookies / headers de autenticación
 }));
 
 // Rutas

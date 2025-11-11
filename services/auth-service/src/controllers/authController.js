@@ -18,45 +18,47 @@ const {
 const dotenv = require("dotenv");
 const { auth, db } = require("../utils/firebaseConfig");
 const { FIREBASE_ERRORS } = require("../utils/constants");
+const admin = require("firebase-admin"); // Para logout forzado
 
 dotenv.config();
 
+// FUNCIONES DEL CONTROLADOR
 async function registerUser(req, res) {
   try {
     const {
+      rol,
       nombre,
       documento,
       correo,
       telefono,
-      rol,
       password,
       medicoTratante,
-      nombreCuidador,
-      documentoCuidador,
+      nombrePaciente,
+      documentoPaciente,
     } = req.body;
 
-    // Crear usuario en Firebase Authentication
+    const rolesPermitidos = ["medico", "paciente", "cuidador"];
+    if (!rolesPermitidos.includes(rol)) {
+      return res.status(400).json({ message: "Rol inválido." });
+    }
+
     const userCredential = await createUserWithEmailAndPassword(auth, correo, password);
     const user = userCredential.user;
 
-    // Actualizar perfil
     await updateProfile(user, { displayName: nombre });
-
-    // Enviar correo de verificación
     await sendEmailVerification(user);
 
-    // Guardar usuario en Firestore
     await setDoc(doc(db, "usuarios", user.uid), {
       uid: user.uid,
+      rol,
       nombre,
       documento,
       correo,
       telefono,
-      rol,
       password,
       medicoTratante: medicoTratante || null,
-      nombreCuidador: nombreCuidador || null,
-      documentoCuidador: documentoCuidador || null,
+      nombrePaciente: nombrePaciente || null,
+      documentoPaciente: documentoPaciente || null,
       creadoEn: new Date(),
     });
 
@@ -76,7 +78,6 @@ async function loginUser(req, res) {
   try {
     const { correo, password } = req.body;
 
-    // Iniciar sesión
     const userCredential = await signInWithEmailAndPassword(auth, correo, password);
     const user = userCredential.user;
 
@@ -86,7 +87,6 @@ async function loginUser(req, res) {
       });
     }
 
-    // Buscar usuario en Firestore
     const q = query(collection(db, "usuarios"), where("correo", "==", correo));
     const querySnapshot = await getDocs(q);
 
@@ -117,7 +117,6 @@ async function changePassword(req, res) {
   try {
     const { correo, oldPassword, newPassword } = req.body;
 
-    // Buscar usuario por correo
     const q = query(collection(db, "usuarios"), where("correo", "==", correo));
     const querySnapshot = await getDocs(q);
 
@@ -128,12 +127,10 @@ async function changePassword(req, res) {
     const userRef = querySnapshot.docs[0].ref;
     const userData = querySnapshot.docs[0].data();
 
-    // Validar contraseña actual
     if (oldPassword !== userData.password) {
       return res.status(401).json({ error: "Contraseña actual incorrecta." });
     }
 
-    // Actualizar contraseña
     await updateDoc(userRef, { password: newPassword });
 
     return res.json({ message: "Contraseña actualizada correctamente." });
@@ -164,9 +161,28 @@ async function deleteUser(req, res) {
   }
 }
 
+// LOGOUT (FORZADO)
+async function logoutUser(req, res) {
+  try {
+    const { uid } = req.body;
+
+    if (!uid) {
+      return res.status(400).json({ error: "Se requiere el UID del usuario." });
+    }
+
+    await admin.auth().revokeRefreshTokens(uid);
+
+    return res.status(200).json({ message: "✅ Sesión del usuario invalidada correctamente." });
+  } catch (error) {
+    console.error("❌ Error al invalidar sesión:", error);
+    return res.status(400).json({ error: error.message });
+  }
+}
+
 module.exports = {
   registerUser,
   loginUser,
   changePassword,
   deleteUser,
+  logoutUser, // <-- agregado
 };
