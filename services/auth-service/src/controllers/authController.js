@@ -1,10 +1,10 @@
-import {
+const {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   updateProfile,
   sendEmailVerification,
-} from "firebase/auth";
-import {
+} = require("firebase/auth");
+const {
   doc,
   setDoc,
   getDoc,
@@ -14,14 +14,14 @@ import {
   where,
   collection,
   getDocs,
-} from "firebase/firestore";
-import dotenv from "dotenv";
-import { auth, db } from "../utils/firebaseConfig.js";
-import { FIREBASE_ERRORS } from "../utils/constants.js";
+} = require("firebase/firestore");
+const dotenv = require("dotenv");
+const { auth, db } = require("../utils/firebaseConfig");
+const { FIREBASE_ERRORS } = require("../utils/constants");
 
 dotenv.config();
 
-export const registerUser = async (req, res) => {
+async function registerUser(req, res) {
   try {
     const {
       nombre,
@@ -53,7 +53,7 @@ export const registerUser = async (req, res) => {
       correo,
       telefono,
       rol,
-      password, 
+      password,
       medicoTratante: medicoTratante || null,
       nombreCuidador: nombreCuidador || null,
       documentoCuidador: documentoCuidador || null,
@@ -70,10 +70,9 @@ export const registerUser = async (req, res) => {
       message: FIREBASE_ERRORS[error.code] || "Ocurrió un error inesperado.",
     });
   }
-};
+}
 
-
-export const loginUser = async (req, res) => {
+async function loginUser(req, res) {
   try {
     const { correo, password } = req.body;
 
@@ -112,10 +111,9 @@ export const loginUser = async (req, res) => {
       message: FIREBASE_ERRORS[error.code] || "Credenciales inválidas.",
     });
   }
-};
+}
 
-
-export const changePassword = async (req, res) => {
+async function changePassword(req, res) {
   try {
     const { correo, oldPassword, newPassword } = req.body;
 
@@ -143,10 +141,9 @@ export const changePassword = async (req, res) => {
     console.error("❌ Error en cambio de contraseña:", error);
     return res.status(400).json({ error: error.message });
   }
-};
+}
 
-
-export const deleteUser = async (req, res) => {
+async function deleteUser(req, res) {
   try {
     const { correo } = req.body;
 
@@ -165,4 +162,11 @@ export const deleteUser = async (req, res) => {
     console.error("❌ Error al eliminar usuario:", error);
     return res.status(400).json({ error: error.message });
   }
+}
+
+module.exports = {
+  registerUser,
+  loginUser,
+  changePassword,
+  deleteUser,
 };

@@ -1,12 +1,12 @@
-import { db } from "../utils/firebaseConfig.js";
-import { sendNotification } from "../services/notificationService.js";
-import { startScheduler } from "../services/schedulerService.js";
+const { db } = require("../utils/firebaseConfig");
+const { sendNotification } = require("../services/notificationService");
+const { startScheduler } = require("../services/schedulerService");
 
 /**
  * 📩 Crear una notificación personalizada o programada
  * HU 6.1 y 6.2 — Permite definir frecuencia y mensaje base
  */
-export const createNotification = async (req, res) => {
+const createNotification = async (req, res) => {
   try {
     const { uidPaciente, mensaje, frecuencia } = req.body;
 
@@ -37,7 +37,7 @@ export const createNotification = async (req, res) => {
  * 🧠 Enviar un recordatorio inmediato al paciente
  * HU 6.1 — Recordatorios automáticos con mensaje motivador
  */
-export const testSendNotification = async (req, res) => {
+const testSendNotification = async (req, res) => {
   try {
     const { uidPaciente, mensaje } = req.body;
 
@@ -83,7 +83,7 @@ export const testSendNotification = async (req, res) => {
  * HU 6.2 — Configuración de horarios personalizados por el cuidador
  * ✅ Incluye validación de conflictos y programación automática
  */
-export const saveSchedule = async (req, res) => {
+const saveSchedule = async (req, res) => {
   try {
     const { uidCuidador, uidPaciente, dias, horarios } = req.body;
 
@@ -131,3 +131,5 @@ export const saveSchedule = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+module.exports = { createNotification, testSendNotification, saveSchedule };

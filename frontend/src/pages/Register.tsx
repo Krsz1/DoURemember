@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Mail, Lock, User, Phone, IdCard } from "lucide-react";
+import {registerUser} from "../api/authservice";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -114,12 +115,17 @@ const Register = () => {
       };
     }
 
-    // Nota: aquí podrías llamar a tu servicio de auth / API / Firebase para crear el usuario.
-    // Por ahora dejamos en consola para pruebas locales.
-    console.log("Datos de registro preparados:", dataToSend);
+  try {
+    const result = await registerUser(dataToSend);
+    console.log("Usuario registrado:", result);
+    alert("Usuario registrado con éxito. Ya puedes iniciar sesión.");
 
-    // Ejemplo: limpiar form (opcional)
-    // setFormData({ rol: "", nombre: "", documento: "", nombrePaciente: "", documentoPaciente: "", nombreCuidador: "", documentoCuidador: "", medicoTratante: "", correo: "", telefono: "", password: "", confirmPassword: "" });
+  } catch (error: any) {
+    console.error("Error registrando usuario:", error.response?.data || error.message);
+    alert("Error al registrar usuario: " + (error.response?.data?.message || error.message));
+  }
+};
+
   };
 
   return (

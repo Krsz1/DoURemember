@@ -1,7 +1,7 @@
 const path = require("path");
 require("dotenv").config({ path: path.resolve(__dirname, "../../.env") });
 const express = require("express");
-const { connectMongo } = require("./utils/bd");
+const { connectMongo } = require("./utils/db");
 const reportRoutes = require("./routes/report-routes");
 
 const app = express();

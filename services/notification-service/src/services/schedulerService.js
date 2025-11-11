@@ -1,6 +1,6 @@
-import cron from "node-cron";
-import { db } from "../utils/firebaseConfig.js";
-import { sendNotification } from "./notificationService.js";
+const cron = require("node-cron");
+const { db } = require("../utils/firebaseConfig");
+const { sendNotification } = require("./notificationService");
 
 const diasSemana = {
   "Domingo": 0,
@@ -12,7 +12,7 @@ const diasSemana = {
   "Sábado": 6,
 };
 
-export const startScheduler = async () => {
+const startScheduler = async () => {
   console.log("⏰ Cargando horarios desde Firestore...");
 
   // ♻️ Limpia tareas previas
@@ -42,3 +42,5 @@ export const startScheduler = async () => {
     });
   });
 };
+
+module.exports = { startScheduler };
