@@ -1,12 +1,12 @@
-import nodemailer from "nodemailer";
-import { db } from "../utils/firebaseConfig.js";
+const nodemailer = require("nodemailer");
+const { db } = require("../utils/firebaseConfig");
 
 /**
  * Envía un recordatorio por correo al paciente, y registra el envío en Firestore.
  * @param {string} uidPaciente - UID del paciente en Firebase.
  * @param {string} frecuencia - "diario", "semanal" o "mensual"
  */
-export const sendNotification = async (uidPaciente, frecuencia = "diario") => {
+const sendNotification = async (uidPaciente, frecuencia = "diario") => {
   try {
     // Obtener datos del paciente desde Firestore
     const userSnap = await db.collection("usuarios").doc(uidPaciente).get();
@@ -71,3 +71,5 @@ export const sendNotification = async (uidPaciente, frecuencia = "diario") => {
     return false;
   }
 };
+
+module.exports = { sendNotification };

@@ -1,16 +1,30 @@
-import admin from "firebase-admin";
-import dotenv from "dotenv";
+const admin = require("firebase-admin");
+const dotenv = require("dotenv");
+const fs = require("fs");
+const path = require("path");
 
-dotenv.config();
+// Cargar variables de entorno desde el .env ubicado en services/
+dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
 
+// Construir la ruta absoluta al firebase.json usando la ruta relativa del .env
+// Nota: tu .env tiene GOOGLE_APPLICATION_CREDENTIALS=../firebase.json
+const serviceAccountPath = path.resolve(__dirname, "../../../", process.env.GOOGLE_APPLICATION_CREDENTIALS);
+
+// Verificar que el archivo exista antes de leerlo
+if (!fs.existsSync(serviceAccountPath)) {
+  throw new Error(`No se encontró el archivo de credenciales en: ${serviceAccountPath}`);
+}
+
+// Cargar las credenciales
+const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, "utf8"));
+
+// Inicializar Firebase Admin solo si no está inicializado
 if (!admin.apps.length) {
   admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
-    }),
+    credential: admin.credential.cert(serviceAccount),
   });
 }
 
-export const db = admin.firestore();
+const db = admin.firestore();
+
+module.exports = { db };

@@ -1,19 +1,24 @@
-import express from "express";
-import {
+const express = require("express");
+const {
   registerUser,
   loginUser,
   changePassword,
   deleteUser,
-} from "../controllers/authController.js";
-import { validate } from "../middlewares/validate.js";
-import { registerSchema, loginSchema } from "../schemas/authSchemas.js";
+  logoutUser, // <-- agregado
+} = require("../controllers/authController");
+
+const validate = require("../middlewares/validate");
+const { registerSchema, loginSchema } = require("../schemas/authSchemas");
 
 const router = express.Router();
 
-// Rutas simples para Postman (sin tokens)
+// Rutas existentes
 router.post("/register", validate(registerSchema), registerUser);
 router.post("/login", validate(loginSchema), loginUser);
 router.put("/password", changePassword);
 router.delete("/delete", deleteUser);
 
-export default router;
+// Nueva ruta de logout
+router.post("/logout", logoutUser);
+
+module.exports = router;

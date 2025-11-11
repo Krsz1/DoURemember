@@ -1,4 +1,4 @@
-export const notificationSchema = {
+const notificationSchema = {
   uidPaciente: "",
   tipo: "recordatorio",
   mensaje: "",
@@ -7,3 +7,5 @@ export const notificationSchema = {
   fechaProgramada: null,
   creadoEn: new Date(),
 };
+
+module.exports = { notificationSchema };
