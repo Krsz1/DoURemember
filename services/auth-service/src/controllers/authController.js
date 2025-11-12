@@ -17,12 +17,12 @@ const {
 } = require("firebase/firestore");
 const dotenv = require("dotenv");
 const { auth, db } = require("../utils/firebaseConfig");
+const { adminAuth, adminDb } = require("../utils/firebaseAdmin");
 const { FIREBASE_ERRORS } = require("../utils/constants");
-const admin = require("firebase-admin"); // Para logout forzado
 
 dotenv.config();
 
-// FUNCIONES DEL CONTROLADOR
+// REGISTRO DE USUARIO
 async function registerUser(req, res) {
   try {
     const {
@@ -74,6 +74,8 @@ async function registerUser(req, res) {
   }
 }
 
+
+// LOGIN DE USUARIO
 async function loginUser(req, res) {
   try {
     const { correo, password } = req.body;
@@ -95,13 +97,14 @@ async function loginUser(req, res) {
     }
 
     const userData = querySnapshot.docs[0].data();
+    const token = await user.getIdToken(); // ✅ Generar token Firebase
 
     return res.status(200).json({
       message: "✅ Usuario logueado exitosamente.",
+      token, // Se envía el token al frontend
       user: {
         uid: user.uid,
         email: user.email,
-        displayName: user.displayName,
         rol: userData.rol,
       },
     });
@@ -113,6 +116,7 @@ async function loginUser(req, res) {
   }
 }
 
+// CAMBIO DE CONTRASEÑA
 async function changePassword(req, res) {
   try {
     const { correo, oldPassword, newPassword } = req.body;
@@ -140,6 +144,8 @@ async function changePassword(req, res) {
   }
 }
 
+
+// ELIMINAR USUARIO
 async function deleteUser(req, res) {
   try {
     const { correo } = req.body;
@@ -161,28 +167,69 @@ async function deleteUser(req, res) {
   }
 }
 
-// LOGOUT (FORZADO)
+
+// LOGOUT REAL
 async function logoutUser(req, res) {
   try {
-    const { uid } = req.body;
+    const authHeader = req.headers.authorization;
 
-    if (!uid) {
-      return res.status(400).json({ error: "Se requiere el UID del usuario." });
+    if (!authHeader) {
+      return res.status(401).json({ error: "No se proporcionó token de autorización." });
     }
 
-    await admin.auth().revokeRefreshTokens(uid);
+    const token = authHeader.split(" ")[1]; // "Bearer <token>"
+    const decoded = await adminAuth.verifyIdToken(token);
 
-    return res.status(200).json({ message: "✅ Sesión del usuario invalidada correctamente." });
+    // Revocar el token del usuario autenticado
+    await adminAuth.revokeRefreshTokens(decoded.uid);
+
+    return res.status(200).json({ message: "✅ Sesión cerrada e invalidada correctamente." });
   } catch (error) {
-    console.error("❌ Error al invalidar sesión:", error);
+    console.error("❌ Error al cerrar sesión:", error);
     return res.status(400).json({ error: error.message });
   }
 }
+
+// Consultar datos de usuario por ID
+async function getUserById(req, res) {
+  try {
+    const { uid } = req.params;
+    if (!uid) return res.status(400).json({ message: "UID no proporcionado." });
+
+    const userRecord = await adminAuth.getUser(uid); // ✅ Admin SDK
+    const userDoc = await adminDb.collection("usuarios").doc(uid).get(); // ✅ Admin SDK
+
+    if (!userDoc.exists) {
+      return res.status(404).json({ message: "Usuario no encontrado." });
+    }
+
+    const userData = userDoc.data();
+
+    return res.status(200).json({
+      uid: userRecord.uid,
+      correo: userRecord.email,
+      nombre: userData.nombre,
+      telefono: userData.telefono,
+      rol: userData.rol,
+      documento: userData.documento,
+      medicoTratante: userData.medicoTratante || null,
+      nombrePaciente: userData.nombrePaciente || null,
+      documentoPaciente: userData.documentoPaciente || null,
+    });
+  } catch (error) {
+    console.error("Error obteniendo perfil:", error);
+    return res.status(500).json({ message: "Error al obtener el perfil", error: error.message });
+  }
+}
+
+
+
 
 module.exports = {
   registerUser,
   loginUser,
   changePassword,
   deleteUser,
-  logoutUser, // <-- agregado
+  logoutUser,
+  getUserById
 };

@@ -8,35 +8,29 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+const handleLogin = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    // Validaciones básicas
-    if (!email) {
-      alert("Ingresa correo");
-      return;
-    }
+  if (!email || !password) return;
 
-    if (!password) {
-      alert("Ingresa contraseña");
-      return;
-    }
+  try {
+    const data: LoginData = { correo: email, password };
+    const userData = await loginUser(data);
+    console.log("Usuario autenticado:", userData);
 
-    try {
-      const data: LoginData = { correo: email, password };
-      const userData = await loginUser(data); // <-- aquí llamas al backend
-      console.log("Usuario autenticado:", userData);
+    // Guardar usuario y token en localStorage
+    localStorage.setItem("user", JSON.stringify(userData.user));
+    localStorage.setItem("uid", userData.user.uid);
+    localStorage.setItem("token", userData.token);
 
-      // Guardar usuario en localStorage
-      localStorage.setItem("user", JSON.stringify(userData.user));
+    alert("Inicio de sesión exitoso");
+    navigate("/dashboard");
+  } catch (error: any) {
+    console.error("Error login:", error.response?.data || error.message);
+    alert("Error al iniciar sesión: " + (error.response?.data?.message || error.message));
+  }
+};
 
-      alert("Inicio de sesión exitoso");
-      navigate("/dashboard");
-    } catch (error: any) {
-      console.error("Error login:", error.response?.data || error.message);
-      alert("Error al iniciar sesión: " + (error.response?.data?.message || error.message));
-    }
-  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-300 via-pink-200 to-yellow-100 px-4">

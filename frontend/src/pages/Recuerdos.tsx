@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import { ArrowLeft, Plus, Trash } from "lucide-react";
-import { logoutUser } from "../api/authservice";
+import { logoutUser, getUserData } from "../api/authservice";
 
 
 type Recuerdo = {
@@ -17,6 +17,14 @@ const formatToday = () => new Date().toISOString().split("T")[0];
 
 export default function Recuerdos() {
   const navigate = useNavigate();
+  const [user, setUser] = useState<{ nombre: string; email: string; rol: string } | null>(null);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
 
   const [recuerdos, setRecuerdos] = useState<Recuerdo[]>([
     {
@@ -73,21 +81,55 @@ export default function Recuerdos() {
     setRecuerdos((prev) => prev.filter((r) => r.id !== id));
   };
 
-  // Función para cerrar sesión
-  const uid = localStorage.getItem("uid");
-  
+  // Función para cerrar sesión  
   const handleLogout = async () => {
-    if (!uid) return;
-    await logoutUser(uid);
-    localStorage.removeItem("uid");
-    navigate("/");
+    const uid = localStorage.getItem("uid");
+    const token = localStorage.getItem("token");
+
+    if (!uid || !token) {
+      console.warn("⚠️ No hay sesión activa");
+      navigate("/login");
+      return;
+    }
+
+    try {
+      await logoutUser(uid, token); // ahora envía uid y token al backend
+      localStorage.removeItem("uid");
+      localStorage.removeItem("token");
+      localStorage.removeItem("correo"); // si guardas el correo del usuario
+      navigate("/login");
+    } catch (error) {
+      console.error("❌ Error cerrando sesión:", error);
+    }
   };
 
+  const handleGetUserData = async () => {
+    try {
+      const uid = localStorage.getItem("uid");
+      const token = localStorage.getItem("token");
+  
+      if (!uid || !token) throw new Error("No hay sesión activa");
+  
+      const userData = await getUserData(uid, token);
+  
+      localStorage.setItem("user", JSON.stringify({
+        nombre: userData.nombre,
+        email: userData.correo,
+        rol: userData.rol
+      }));
+  
+      // Navegar al perfil
+      navigate("/profile", { state: { user: userData } });
+    } catch (error) {
+      console.error("❌ Error cargando perfil:", error);
+    }
+  };
+  
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
       <div className="bg-white shadow-sm sticky top-0 z-10">
-        <Header logout={handleLogout}/>
+        <Header user={user} logout={handleLogout} getUserData={handleGetUserData}/>
       </div>
 
       <main className="flex-1 max-w-6xl mx-auto px-6 py-10">

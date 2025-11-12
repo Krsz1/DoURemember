@@ -1,22 +1,23 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { User, Trash2, KeyRound, MailCheck, BarChart2, FileText } from "lucide-react";
-import { deleteUser, changePassword, loginUser } from "../api/authservice";
+import { getUserData } from "../api/authservice";
+import { User, BarChart2, FileText } from "lucide-react";
 import jsPDF from "jspdf";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
-// Tipos de usuario
 interface UserProfile {
   uid: string;
   nombre: string;
   documento: string;
   correo: string;
   telefono: string;
-  rol: string;
+  rol: "medico" | "paciente" | "cuidador";
+  medicoTratante?: string;
+  nombrePaciente?: string;
+  documentoPaciente?: string;
   foto?: string;
 }
 
-// Tipos de métricas
 interface Metric {
   name: string;
   memoria: number;
@@ -32,47 +33,31 @@ export default function Profile() {
   const [userData, setUserData] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Datos simulados para las métricas
   const [metrics] = useState<Metric[]>([
     { name: "Juego 1", memoria: 85, coherencia: 90, omision: 5, comision: 4 },
     { name: "Juego 2", memoria: 82, coherencia: 88, omision: 6, comision: 5 },
     { name: "Juego 3", memoria: 90, coherencia: 92, omision: 3, comision: 2 },
   ]);
 
-  const [lastMetric] = useState(metrics[metrics.length - 1]);
-  const [previousMetric] = useState(metrics[metrics.length - 2]);
+  const lastMetric = metrics[metrics.length - 1];
+  const previousMetric = metrics[metrics.length - 2] || lastMetric;
 
-  // Evaluar mejoras o deterioros
   const evaluateChange = (current: number, previous: number) => {
     if (current > previous) return "text-green-600";
     if (current < previous) return "text-red-500";
     return "text-gray-600";
   };
 
-  // Cargar datos del usuario
   const handleProfile = async (uid: string) => {
     try {
-      const storedUser = localStorage.getItem("user");
-      if (!storedUser) throw new Error("No hay usuario autenticado");
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("No hay sesión activa");
 
-      const currentUser = JSON.parse(storedUser);
-      const userResponse = await loginUser({ correo: currentUser.user.email, password: "" });
+      const data = await getUserData(uid, token);
 
       setUserData({
-        uid: userResponse.user.uid,
-        nombre: userResponse.user.displayName,
-        correo: userResponse.user.email,
-        documento: userResponse.user.documento || "",
-        telefono: userResponse.user.telefono || "",
-        rol: userResponse.user.rol,
-        foto: userResponse.user.foto || "https://via.placeholder.com/120?text=Foto+Usuario",
-      });
-
-      // Registrar consulta (simulado)
-      console.log("Consulta registrada:", {
-        medico: currentUser.user.email,
-        fecha: new Date().toLocaleString(),
-        paciente: userResponse.user.displayName,
+        ...data,
+        foto: data.foto || "https://via.placeholder.com/120?text=Foto+Usuario",
       });
     } catch (error: any) {
       console.error("Error al cargar perfil:", error.response?.data || error.message);
@@ -84,27 +69,25 @@ export default function Profile() {
   };
 
   useEffect(() => {
-    if (paramUid) handleProfile(paramUid);
+    const uid = paramUid || localStorage.getItem("uid");
+    if (uid) handleProfile(uid);
     else navigate("/dashboard");
   }, [paramUid]);
 
-  // Función para exportar PDF
   const exportPDF = () => {
     const doc = new jsPDF();
     doc.text("Reporte de métricas cognitivas", 20, 20);
     doc.text(`Usuario: ${userData?.nombre}`, 20, 30);
-    doc.text("Resultados:", 20, 50);
     metrics.forEach((m, i) => {
       doc.text(
         `${m.name}: Memoria ${m.memoria}, Coherencia ${m.coherencia}, Omisión ${m.omision}, Comisión ${m.comision}`,
         20,
-        60 + i * 10
+        50 + i * 10
       );
     });
     doc.save(`reporte-${userData?.nombre}.pdf`);
   };
 
-  // Función para exportar CSV
   const exportCSV = () => {
     const header = "Juego,Memoria,Coherencia,Omision,Comision\n";
     const rows = metrics.map(m => `${m.name},${m.memoria},${m.coherencia},${m.omision},${m.comision}`).join("\n");
@@ -116,7 +99,7 @@ export default function Profile() {
   };
 
   if (loading) return <p>Cargando perfil...</p>;
-  if (!userData) return null;
+  if (!userData) return <p>No se encontró usuario</p>;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex flex-col items-center py-10 px-4">
@@ -128,7 +111,7 @@ export default function Profile() {
             alt="Foto del usuario"
             className="w-32 h-32 rounded-full object-cover border-4 border-orange-400 shadow-lg mb-4"
           />
-          <h1 className="text-2xl font-semibold text-gray-900">{userData.nombre}</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">{userData.nombre.split(" ")[0]}</h1>
           <p className="text-gray-500 text-sm mt-1">Rol: {userData.rol}</p>
         </div>
 
@@ -138,9 +121,21 @@ export default function Profile() {
             <User className="w-5 h-5 text-orange-500" /> Información del usuario
           </h2>
           <div className="text-sm space-y-1">
+            <p><strong>Nombre completo:</strong> {userData.nombre}</p>
             <p><strong>Documento:</strong> {userData.documento}</p>
             <p><strong>Correo:</strong> {userData.correo}</p>
             <p><strong>Teléfono:</strong> {userData.telefono}</p>
+
+            {/* Campos según el rol */}
+            {userData.rol === "paciente" && (
+              <p><strong>Médico tratante:</strong> {userData.medicoTratante || "No asignado"}</p>
+            )}
+            {userData.rol === "cuidador" && (
+              <>
+                <p><strong>Nombre del paciente:</strong> {userData.nombrePaciente || "No asignado"}</p>
+                <p><strong>Documento del paciente:</strong> {userData.documentoPaciente || "No asignado"}</p>
+              </>
+            )}
           </div>
         </div>
 

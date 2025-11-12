@@ -8,9 +8,10 @@ interface HeaderProps {
     nombre?: string;
   };
   logout: () => Promise<void>;
+  getUserData: () => Promise<void>;
 }
 
-export default function Header({ user, logout }: HeaderProps) {
+export default function Header({ user, logout, getUserData }: HeaderProps) {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -19,8 +20,13 @@ export default function Header({ user, logout }: HeaderProps) {
     navigate("/");
   };
 
-  const handleProfileClick = () => {
-    navigate("/profile");
+
+  const handleGetUserData = async () => {
+    try {
+      await getUserData();
+    } catch (error) {
+      console.error("❌ Error obteniendo datos del usuario:", error);
+    }
   };
 
   return (
@@ -45,13 +51,13 @@ export default function Header({ user, logout }: HeaderProps) {
           {/* Usuario y logout */}
           <div className="flex items-center gap-3">
             <button
-              onClick={handleProfileClick}
+              onClick={handleGetUserData}
               className="flex items-center gap-2 text-sm text-slate-700 hover:text-blue-600 transition"
               aria-label="Ir al perfil"
               title="Ver perfil"
             >
               <User className="w-4 h-4" />
-              <span>{user?.email ?? "Usuario"}</span>
+              <span>{user?.nombre?.split(" ")[0] ?? "Usuario"}</span>
             </button>
 
             <button
