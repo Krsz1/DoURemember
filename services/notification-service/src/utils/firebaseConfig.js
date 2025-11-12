@@ -3,12 +3,9 @@ const dotenv = require("dotenv");
 const fs = require("fs");
 const path = require("path");
 
-// Cargar variables de entorno desde el .env ubicado en services/
-dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
+dotenv.config();
 
-// Construir la ruta absoluta al firebase.json usando la ruta relativa del .env
-// Nota: tu .env tiene GOOGLE_APPLICATION_CREDENTIALS=../firebase.json
-const serviceAccountPath = path.resolve(__dirname, "../../../", process.env.GOOGLE_APPLICATION_CREDENTIALS);
+const serviceAccountPath = path.resolve(__dirname, process.env.GOOGLE_APPLICATION_CREDENTIALS);
 
 // Verificar que el archivo exista antes de leerlo
 if (!fs.existsSync(serviceAccountPath)) {
